@@ -1229,7 +1229,8 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
       // Optional check for an isotrack veto
       if (useIsotrackVeto){
-        if (hasVetoIsotrack) continue;
+        rcd_output.setNamedVal("pass_isotrack_vetos", !hasVetoIsotrack);
+        if (!produce_trees && applyPreselection && hasVetoIsotrack) continue;
         seltracker.accumulate("Pass isolated track veto", wgt, printObjInfo);
       }
 

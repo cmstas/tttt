@@ -60,7 +60,7 @@ ARCH         := $(shell root-config --arch)
 
 CXX           = g++
 CXXINC        = -I$(ROOFITSYS)/include/ -I$(BASEINCLUDE) -I$(INCLUDEDIR)
-CXXDEFINES    = -D_COMPILE_STANDALONE_
+CXXDEFINES    = -D_COMPILE_IVY_STANDALONE_
 CXXFLAGS      = -fPIC -g -O2 $(ROOTCFLAGS) $(CXXDEFINES) $(CXXINC) $(EXTCXXFLAGS)
 LINKERFLAGS   = -Wl,-rpath=$(LIBDIR),-soname,$(LIB)
 
