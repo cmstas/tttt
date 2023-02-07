@@ -16,9 +16,12 @@ public:
 protected:
   friend class ParticleDisambiguator;
 
+  bool extractOptionalInfo;
   std::vector<ProductType_t*> productList;
 
   void clear(){ this->resetCache(); for (ProductType_t*& prod:productList) delete prod; productList.clear(); }
+
+  void setConsumed(unsigned char i_used_unused);
 
   bool constructElectronObjects();
 
@@ -34,6 +37,8 @@ public:
   std::vector<ProductType_t*> const& getProducts() const{ return productList; }
 
   void bookBranches(BaseTree* tree);
+
+  void setExtractOptionalInfo(bool flag){ extractOptionalInfo = flag; }
 
 };
 

@@ -464,7 +464,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, muons, ptratio_final) \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, muons, bscore) \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, muons, extMVAscore) \
-      MUON_EXTRA_VARIABLES
+      MUON_EXTRA_MANDATORY_VARIABLES
       // Electron sync. write variables
 #define SYNC_ELECTRONS_BRANCH_VECTOR_COMMANDS \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(bool, electrons, is_loose) \
@@ -480,7 +480,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, electrons, mvaFall17V2noIso_raw) \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, electrons, bscore) \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, electrons, extMVAscore) \
-      ELECTRON_EXTRA_VARIABLES
+      ELECTRON_EXTRA_MANDATORY_VARIABLES
       // ak4jet sync. write variables
 #define SYNC_AK4JETS_BRANCH_VECTOR_COMMANDS \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(bool, ak4jets, is_tight) \
@@ -634,21 +634,23 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         bool is_btagged = jet->testSelectionBit(bit_preselection_btag);
         constexpr bool is_clean = true;
 
-        float theSF_btag = 1;
-        float theEff_btag = 1;
-        btagSFHandler.getSFAndEff(theGlobalSyst, jet, theSF_btag, &theEff_btag); theSF_btag = std::max(theSF_btag, 1e-5f); event_wgt_SFs_btagging *= theSF_btag;
-        if (theSF_btag<=1e-5f){
-          IVYout
-            << "Jet has b-tagging SF<=1e-5:"
-            << "\n\t- pt = " << jet->pt()
-            << "\n\t- eta = " << jet->eta()
-            << "\n\t- b kin = " << jet->testSelectionBit(AK4JetSelectionHelpers::kKinOnly_BTag)
-            << "\n\t- Loose = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Loose)
-            << "\n\t- Medium = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Medium)
-            << "\n\t- Tight = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Tight)
-            << "\n\t- Eff =  " << theEff_btag
-            << "\n\t- SF = " << theSF_btag
-            << endl;
+        if (!isData){
+          float theSF_btag = 1;
+          float theEff_btag = 1;
+          btagSFHandler.getSFAndEff(theGlobalSyst, jet, theSF_btag, &theEff_btag); theSF_btag = std::max(theSF_btag, 1e-5f); event_wgt_SFs_btagging *= theSF_btag;
+          if (theSF_btag<=1e-5f){
+            IVYout
+              << "Jet has b-tagging SF<=1e-5:"
+              << "\n\t- pt = " << jet->pt()
+              << "\n\t- eta = " << jet->eta()
+              << "\n\t- b kin = " << jet->testSelectionBit(AK4JetSelectionHelpers::kKinOnly_BTag)
+              << "\n\t- Loose = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Loose)
+              << "\n\t- Medium = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Medium)
+              << "\n\t- Tight = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Tight)
+              << "\n\t- Eff =  " << theEff_btag
+              << "\n\t- SF = " << theSF_btag
+              << endl;
+          }
         }
 
 #define SYNC_OBJ_BRANCH_VECTOR_COMMAND(TYPE, COLLNAME, NAME) COLLNAME##_##NAME.push_back(NAME);

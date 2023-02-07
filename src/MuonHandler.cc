@@ -22,26 +22,42 @@ MUON_VARIABLE(int, pdgId, -9000)
 const std::string MuonHandler::colName = GlobalCollectionNames::colName_muons;
 
 MuonHandler::MuonHandler() :
-  IvyBase()
+  IvyBase(),
+  extractOptionalInfo(false)
 {
-  this->addConsumed<GlobalCollectionNames::collsize_t>(Form("n%s", MuonHandler::colName.data()));
-#define MUON_VARIABLE(TYPE, NAME, DEFVAL) this->addConsumed<TYPE* const>(MuonHandler::colName + "_" + #NAME);
-  MUON_MOMENTUM_VARIABLES;
-  MUON_EXTRA_UNUSED_VARIABLES_COMMON;
-  MUON_EXTRA_USED_VARIABLES_COMMON;
+  setConsumed(0);
+}
 
+void MuonHandler::setConsumed(unsigned char i_used_unused){
   auto const& dy = SampleHelpers::getDataYear();
-  if (dy>=2015 && dy<=2018){
-    MUON_EXTRA_UNUSED_VARIABLES_RUN2;
-    MUON_EXTRA_USED_VARIABLES_RUN2;
-  }
-  else if (dy==2022){
-    MUON_EXTRA_UNUSED_VARIABLES_RUN3;
-    MUON_EXTRA_USED_VARIABLES_RUN3;
+#define MUON_VARIABLE(TYPE, NAME, DEFVAL) this->addConsumed<TYPE* const>(MuonHandler::colName + "_" + #NAME);
+  if (i_used_unused==0){
+    this->addConsumed<GlobalCollectionNames::collsize_t>(Form("n%s", MuonHandler::colName.data()));
+    MUON_MOMENTUM_VARIABLES;
+    MUON_EXTRA_MANDATORY_VARIABLES_COMMON;
+    if (dy>=2015 && dy<=2018){
+      MUON_EXTRA_MANDATORY_VARIABLES_RUN2;
+    }
+    else if (dy==2022){
+      MUON_EXTRA_MANDATORY_VARIABLES_RUN3;
+    }
+    else{
+      IVYerr << "MuonHandler::setConsumed: Could not identify data year to determine year-dependent mandatory variable names." << endl;
+      assert(0);
+    }
   }
   else{
-    IVYerr << "MuonHandler::MuonHandler: Could not identify data year to determine year-dependent variable names." << endl;
-    assert(0);
+    MUON_EXTRA_OPTIONAL_VARIABLES_COMMON;
+    if (dy>=2015 && dy<=2018){
+      MUON_EXTRA_OPTIONAL_VARIABLES_RUN2;
+    }
+    else if (dy==2022){
+      MUON_EXTRA_OPTIONAL_VARIABLES_RUN3;
+    }
+    else{
+      IVYerr << "MuonHandler::setConsumed: Could not identify data year to determine year-dependent optional variable names." << endl;
+      assert(0);
+    }
   }
 #undef MUON_VARIABLE
 }
@@ -71,16 +87,21 @@ bool MuonHandler::constructMuonObjects(){
   bool allVariablesPresent = this->getConsumedValue(Form("n%s", MuonHandler::colName.data()), nProducts);
 #define MUON_VARIABLE(TYPE, NAME, DEFVAL) allVariablesPresent &= this->getConsumed<TYPE* const>(MuonHandler::colName + "_" + #NAME, arr_##NAME);
   MUON_MOMENTUM_VARIABLES;
-  MUON_EXTRA_UNUSED_VARIABLES_COMMON;
-  MUON_EXTRA_USED_VARIABLES_COMMON;
-
+  MUON_EXTRA_MANDATORY_VARIABLES_COMMON;
+  if (extractOptionalInfo){
+    MUON_EXTRA_OPTIONAL_VARIABLES_COMMON;
+  }
   if (dy>=2015 && dy<=2018){
-    MUON_EXTRA_UNUSED_VARIABLES_RUN2;
-    MUON_EXTRA_USED_VARIABLES_RUN2;
+    MUON_EXTRA_MANDATORY_VARIABLES_RUN2;
+    if (extractOptionalInfo){
+      MUON_EXTRA_OPTIONAL_VARIABLES_RUN2;
+    }
   }
   else if (dy==2022){
-    MUON_EXTRA_UNUSED_VARIABLES_RUN3;
-    MUON_EXTRA_USED_VARIABLES_RUN3;
+    MUON_EXTRA_MANDATORY_VARIABLES_RUN3;
+    if (extractOptionalInfo){
+      MUON_EXTRA_OPTIONAL_VARIABLES_RUN3;
+    }
   }
   else{
     IVYerr << "MuonHandler::constructMuonObjects: Could not identify data year to determine year-dependent variable names." << endl;
@@ -140,21 +161,28 @@ bool MuonHandler::constructMuonObjects(){
 
 void MuonHandler::bookBranches(BaseTree* tree){
   if (!tree) return;
+  if (extractOptionalInfo) setConsumed(1);
+
+  auto const& dy = SampleHelpers::getDataYear();
 
   tree->bookBranch<GlobalCollectionNames::collsize_t>(Form("n%s", MuonHandler::colName.data()), 0);
 #define MUON_VARIABLE(TYPE, NAME, DEFVAL) tree->bookArrayBranch<TYPE>(MuonHandler::colName + "_" + #NAME, DEFVAL, GlobalCollectionNames::colMaxSize_muons);
   MUON_MOMENTUM_VARIABLES;
-  MUON_EXTRA_UNUSED_VARIABLES_COMMON;
-  MUON_EXTRA_USED_VARIABLES_COMMON;
-
-  auto const& dy = SampleHelpers::getDataYear();
+  MUON_EXTRA_MANDATORY_VARIABLES_COMMON;
+  if (extractOptionalInfo){
+    MUON_EXTRA_OPTIONAL_VARIABLES_COMMON;
+  }
   if (dy>=2015 && dy<=2018){
-    MUON_EXTRA_UNUSED_VARIABLES_RUN2;
-    MUON_EXTRA_USED_VARIABLES_RUN2;
+    MUON_EXTRA_MANDATORY_VARIABLES_RUN2;
+    if (extractOptionalInfo){
+      MUON_EXTRA_OPTIONAL_VARIABLES_RUN2;
+    }
   }
   else if (dy==2022){
-    MUON_EXTRA_UNUSED_VARIABLES_RUN3;
-    MUON_EXTRA_USED_VARIABLES_RUN3;
+    MUON_EXTRA_MANDATORY_VARIABLES_RUN3;
+    if (extractOptionalInfo){
+      MUON_EXTRA_OPTIONAL_VARIABLES_RUN3;
+    }
   }
   else{
     IVYerr << "MuonHandler::bookBranches: Could not identify data year to determine year-dependent variable names." << endl;

@@ -341,6 +341,10 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   eventFilter.setCheckUniqueDataEvent(has_multiple_dsets);
   eventFilter.setCheckHLTPathRunRanges(true);
 
+  // Allow extraction of optional lepton information
+  muonHandler.setExtractOptionalInfo(writeSyncObjects);
+  electronHandler.setExtractOptionalInfo(writeSyncObjects);
+
   curdir->cd();
 
   // We conclude the setup of event processing specifications and move on to I/O configuration next.
@@ -962,21 +966,23 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         constexpr bool is_clean = true;
         unsigned int uniqueIdenntifier = jet->getUniqueIdentifier();
 
-        float theSF_btag = 1;
-        float theEff_btag = 1;
-        btagSFHandler.getSFAndEff(theGlobalSyst, jet, theSF_btag, &theEff_btag); theSF_btag = std::max(theSF_btag, 1e-5f); event_wgt_SFs_btagging *= theSF_btag;
-        if (theSF_btag<=1e-5f){
-          IVYout
-            << "Jet has b-tagging SF<=1e-5:"
-            << "\n\t- pt = " << jet->pt()
-            << "\n\t- eta = " << jet->eta()
-            << "\n\t- b kin = " << jet->testSelectionBit(AK4JetSelectionHelpers::kKinOnly_BTag)
-            << "\n\t- Loose = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Loose)
-            << "\n\t- Medium = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Medium)
-            << "\n\t- Tight = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Tight)
-            << "\n\t- Eff =  " << theEff_btag
-            << "\n\t- SF = " << theSF_btag
-            << endl;
+        if (!isData){
+          float theSF_btag = 1;
+          float theEff_btag = 1;
+          btagSFHandler.getSFAndEff(theGlobalSyst, jet, theSF_btag, &theEff_btag); theSF_btag = std::max(theSF_btag, 1e-5f); event_wgt_SFs_btagging *= theSF_btag;
+          if (theSF_btag<=1e-5f){
+            IVYout
+              << "Jet has b-tagging SF<=1e-5:"
+              << "\n\t- pt = " << jet->pt()
+              << "\n\t- eta = " << jet->eta()
+              << "\n\t- b kin = " << jet->testSelectionBit(AK4JetSelectionHelpers::kKinOnly_BTag)
+              << "\n\t- Loose = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Loose)
+              << "\n\t- Medium = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Medium)
+              << "\n\t- Tight = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Tight)
+              << "\n\t- Eff =  " << theEff_btag
+              << "\n\t- SF = " << theSF_btag
+              << endl;
+          }
         }
 
         if (printObjInfo) IVYout

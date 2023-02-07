@@ -505,22 +505,23 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         if (is_btaggable){
           ak4jets_tight_selected.push_back(jet);
           if (is_btagged) nbjets_tight++;
-
-          float theSF_btag = 1;
-          float theEff_btag = 1;
-          btagSFHandler.getSFAndEff(theGlobalSyst, jet, theSF_btag, &theEff_btag); theSF_btag = std::max(theSF_btag, 1e-5f); event_wgt_SFs_btagging *= theSF_btag;
-          if (theSF_btag<=1e-5f){
-            IVYout
-              << "Jet has b-tagging SF<=1e-5:"
-              << "\n\t- pt = " << jet->pt()
-              << "\n\t- eta = " << jet->eta()
-              << "\n\t- b kin = " << jet->testSelectionBit(AK4JetSelectionHelpers::kKinOnly_BTag)
-              << "\n\t- Loose = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Loose)
-              << "\n\t- Medium = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Medium)
-              << "\n\t- Tight = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Tight)
-              << "\n\t- Eff =  " << theEff_btag
-              << "\n\t- SF = " << theSF_btag
-              << endl;
+          if (!isData){
+            float theSF_btag = 1;
+            float theEff_btag = 1;
+            btagSFHandler.getSFAndEff(theGlobalSyst, jet, theSF_btag, &theEff_btag); theSF_btag = std::max(theSF_btag, 1e-5f); event_wgt_SFs_btagging *= theSF_btag;
+            if (theSF_btag<=1e-5f){
+              IVYout
+                << "Jet has b-tagging SF<=1e-5:"
+                << "\n\t- pt = " << jet->pt()
+                << "\n\t- eta = " << jet->eta()
+                << "\n\t- b kin = " << jet->testSelectionBit(AK4JetSelectionHelpers::kKinOnly_BTag)
+                << "\n\t- Loose = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Loose)
+                << "\n\t- Medium = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Medium)
+                << "\n\t- Tight = " << jet->testSelectionBit(AK4JetSelectionHelpers::kBTagged_Tight)
+                << "\n\t- Eff =  " << theEff_btag
+                << "\n\t- SF = " << theSF_btag
+                << endl;
+            }
           }
         }
       }

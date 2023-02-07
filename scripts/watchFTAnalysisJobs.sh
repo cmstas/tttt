@@ -1,20 +1,13 @@
 #!/bin/bash
 
-chkdir="$1"
-chkdir=$(readlink -f "${chkdir}")
-chkdir="${chkdir%/}"
-for cdir in ${chkdir}; do
-  if [[ ! -d ${cdir} ]]; then
-    echo "Watch directory ${cdir} is not found."
-    exit 1
-  fi
-done
 
 declare -i sleepdur=1800
 declare -i proxy_valid_threshold=86400 # 1 day
 check_opts=""
 resubmit_opts=""
 mymail=""
+chkdirs=()
+strchkdirs=""
 for farg in "$@"; do
   fargl="$(echo $farg | awk '{print tolower($0)}')"
 
@@ -26,8 +19,28 @@ for farg in "$@"; do
     resubmit_opts="${farg#*=}"
   elif [[ "$fargl" == "email="* ]]; then
     mymail="${farg#*=}"
+  elif [[ "$fargl" == *"="* ]]; then
+    echo "Argument $farg is not recognized."
+    exit 1
+  else
+    chkdir="${farg}"
+    chkdir=$(readlink -f "${chkdir}")
+    chkdir="${chkdir%/}"
+    for cdir in ${chkdir}; do
+      if [[ ! -d ${cdir} ]]; then
+        echo "Watch directory ${cdir} is not found."
+        exit 1
+      fi
+      chkdirs+=( ${cdir} )
+      if [[ -z "${strchkdirs}" ]]; then
+        strchkdirs="$cdir"
+      else
+        strchkdirs+=", $cdir"
+      fi
+    done
   fi
 done
+
 
 declare -i send_emails=0
 if [[ ! -z "${mymail}" ]]; then
@@ -61,8 +74,8 @@ launch_email(){
 eval $(python3 -c 'from getVOMSProxy import getVOMSProxy; getVOMSProxy(True)')
 
 thehost=$(hostname)
-echo "CondorWatch is launched for ${chkdir} by $(whoami):${thehost}."
-launch_email ${mymail} "[CondorWatch] ($(whoami):${thehost}) BEGIN" "A watch on ${chkdir} is launched."
+echo "CondorWatch is launched for ${strchkdirs} by $(whoami):${thehost}."
+launch_email "${mymail}" "[CondorWatch] ($(whoami):${thehost}) BEGIN" "A watch on ${strchkdirs} is launched."
 
 declare -i proxytime=0
 declare -i nTOTAL=0
@@ -72,17 +85,17 @@ declare -i nChecks=0
 while [[ 1 ]]; do
   proxytime=$(voms-proxy-info --timeleft --file=${X509_USER_PROXY})
   if [[ $? -ne 0 ]]; then
-    launch_email ${mymail} "[CondorWatch] ($(whoami):${thehost}) ERROR" "Command 'voms-proxy-info --timeleft --file=${X509_USER_PROXY}' failed with error code $?. The script has aborted."
+    launch_email "${mymail}" "[CondorWatch] ($(whoami):${thehost}) ERROR" "Command 'voms-proxy-info --timeleft --file=${X509_USER_PROXY}' failed with error code $?. The script has aborted."
     exit 1
   fi
   if [[ ${proxytime} -lt ${proxy_valid_threshold} ]]; then
-    launch_email ${mymail} "[CondorWatch] ($(whoami):${thehost}) WARNING" "Your VOMS proxy file ${proxy_file} will expire in less than 1 day. Please remake your proxy file as soon as possible. This script will nag you every ${sleepdur} s until you do so."
+    launch_email "${mymail}" "[CondorWatch] ($(whoami):${thehost}) WARNING" "Your VOMS proxy file ${proxy_file} will expire in less than 1 day. Please remake your proxy file as soon as possible. This script will nag you every ${sleepdur} s until you do so."
   fi
 
   nAllDone=0
   nChecks=0
 
-  for cdir in ${chkdir}; do
+  for cdir in "${chkdirs[@]}"; do
     let nChecks=${nChecks}+1
 
     watchlog=${cdir}/watchlog.txt
@@ -90,7 +103,7 @@ while [[ 1 ]]; do
     rm -f ${watchlog}
     checkFTAnalysisJobs.sh ${cdir} ${check_opts} &> ${watchlog}
     if [[ $? -ne 0 ]]; then
-      launch_email ${mymail} "[CondorWatch] ($(whoami):${thehost}) ERROR" "Command 'checkFTAnalysisJobs.sh ${cdir} ${check_opts} &> ${watchlog}' failed with error code $?. The script has aborted. Please check the file ${watchlog} for hints."
+      launch_email "${mymail}" "[CondorWatch] ($(whoami):${thehost}) ERROR" "Command 'checkFTAnalysisJobs.sh ${cdir} ${check_opts} &> ${watchlog}' failed with error code $?. The script has aborted. Please check the file ${watchlog} for hints."
       exit 1
     fi
 
@@ -107,7 +120,7 @@ while [[ 1 ]]; do
     for d in "${failed_dirs[@]}"; do
       resubmitFTAnalysisJobs.sh ${d} ${resubmit_opts}
       if [[ $? -ne 0 ]]; then
-        launch_email ${mymail} "[CondorWatch] ($(whoami):${thehost}) ERROR" "Command 'resubmitFTAnalysisJobs.sh ${d} ${resubmit_opts}' failed with error code $?. The script has aborted."
+        launch_email "${mymail}" "[CondorWatch] ($(whoami):${thehost}) ERROR" "Command 'resubmitFTAnalysisJobs.sh ${d} ${resubmit_opts}' failed with error code $?. The script has aborted."
         exit 1
       fi
     done
@@ -120,5 +133,5 @@ while [[ 1 ]]; do
   sleep ${sleepdur}
 done
 
-echo "CondorWatch on ${chkdir} has completed successfully."
-launch_email ${mymail} "[CondorWatch] ($(whoami):${thehost}) FINAL REPORT" "All jobs under ${chkdir} have completed successfully. Please do not forget to exit your screen if you opened one for this watch."
+echo "CondorWatch on ${strchkdirs} has completed successfully."
+launch_email "${mymail}" "[CondorWatch] ($(whoami):${thehost}) FINAL REPORT" "All jobs under ${strchkdirs} have completed successfully. Please do not forget to exit your screen if you opened one for this watch."

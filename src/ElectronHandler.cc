@@ -22,26 +22,42 @@ ELECTRON_VARIABLE(int, pdgId, -9000)
 const std::string ElectronHandler::colName = GlobalCollectionNames::colName_electrons;
 
 ElectronHandler::ElectronHandler() :
-  IvyBase()
+  IvyBase(),
+  extractOptionalInfo(false)
 {
-  this->addConsumed<GlobalCollectionNames::collsize_t>(Form("n%s", ElectronHandler::colName.data()));
-#define ELECTRON_VARIABLE(TYPE, NAME, DEFVAL) this->addConsumed<TYPE* const>(ElectronHandler::colName + "_" + #NAME);
-  ELECTRON_MOMENTUM_VARIABLES;
-  ELECTRON_EXTRA_UNUSED_VARIABLES_COMMON;
-  ELECTRON_EXTRA_USED_VARIABLES_COMMON;
+  setConsumed(0);
+}
 
+void ElectronHandler::setConsumed(unsigned char i_used_unused){
   auto const& dy = SampleHelpers::getDataYear();
-  if (dy>=2015 && dy<=2018){
-    ELECTRON_EXTRA_UNUSED_VARIABLES_RUN2;
-    ELECTRON_EXTRA_USED_VARIABLES_RUN2;
-  }
-  else if (dy==2022){
-    ELECTRON_EXTRA_UNUSED_VARIABLES_RUN3;
-    ELECTRON_EXTRA_USED_VARIABLES_RUN3;
+#define ELECTRON_VARIABLE(TYPE, NAME, DEFVAL) this->addConsumed<TYPE* const>(ElectronHandler::colName + "_" + #NAME);
+  if (i_used_unused==0){
+    this->addConsumed<GlobalCollectionNames::collsize_t>(Form("n%s", ElectronHandler::colName.data()));
+    ELECTRON_MOMENTUM_VARIABLES;
+    ELECTRON_EXTRA_MANDATORY_VARIABLES_COMMON;
+    if (dy>=2015 && dy<=2018){
+      ELECTRON_EXTRA_MANDATORY_VARIABLES_RUN2;
+    }
+    else if (dy==2022){
+      ELECTRON_EXTRA_MANDATORY_VARIABLES_RUN3;
+    }
+    else{
+      IVYerr << "ElectronHandler::setConsumed: Could not identify data year to determine year-dependent mandatory variable names." << endl;
+      assert(0);
+    }
   }
   else{
-    IVYerr << "ElectronHandler::ElectronHandler: Could not identify data year to determine year-dependent variable names." << endl;
-    assert(0);
+    ELECTRON_EXTRA_OPTIONAL_VARIABLES_COMMON;
+    if (dy>=2015 && dy<=2018){
+      ELECTRON_EXTRA_OPTIONAL_VARIABLES_RUN2;
+    }
+    else if (dy==2022){
+      ELECTRON_EXTRA_OPTIONAL_VARIABLES_RUN3;
+    }
+    else{
+      IVYerr << "ElectronHandler::setConsumed: Could not identify data year to determine year-dependent optional variable names." << endl;
+      assert(0);
+    }
   }
 #undef ELECTRON_VARIABLE
 }
@@ -72,16 +88,21 @@ bool ElectronHandler::constructElectronObjects(){
   bool allVariablesPresent = this->getConsumedValue(Form("n%s", ElectronHandler::colName.data()), nProducts);
 #define ELECTRON_VARIABLE(TYPE, NAME, DEFVAL) allVariablesPresent &= this->getConsumed<TYPE* const>(ElectronHandler::colName + "_" + #NAME, arr_##NAME);
   ELECTRON_MOMENTUM_VARIABLES;
-  ELECTRON_EXTRA_UNUSED_VARIABLES_COMMON;
-  ELECTRON_EXTRA_USED_VARIABLES_COMMON;
-
+  ELECTRON_EXTRA_MANDATORY_VARIABLES_COMMON;
+  if (extractOptionalInfo){
+    ELECTRON_EXTRA_OPTIONAL_VARIABLES_COMMON;
+  }
   if (dy>=2015 && dy<=2018){
-    ELECTRON_EXTRA_UNUSED_VARIABLES_RUN2;
-    ELECTRON_EXTRA_USED_VARIABLES_RUN2;
+    ELECTRON_EXTRA_MANDATORY_VARIABLES_RUN2;
+    if (extractOptionalInfo){
+      ELECTRON_EXTRA_OPTIONAL_VARIABLES_RUN2;
+    }
   }
   else if (dy==2022){
-    ELECTRON_EXTRA_UNUSED_VARIABLES_RUN3;
-    ELECTRON_EXTRA_USED_VARIABLES_RUN3;
+    ELECTRON_EXTRA_MANDATORY_VARIABLES_RUN3;
+    if (extractOptionalInfo){
+      ELECTRON_EXTRA_OPTIONAL_VARIABLES_RUN3;
+    }
   }
   else{
     IVYerr << "ElectronHandler::constructElectronObjects: Could not identify data year to determine year-dependent variable names." << endl;
@@ -141,21 +162,28 @@ bool ElectronHandler::constructElectronObjects(){
 
 void ElectronHandler::bookBranches(BaseTree* tree){
   if (!tree) return;
+  if (extractOptionalInfo) setConsumed(1);
+
+  auto const& dy = SampleHelpers::getDataYear();
 
   tree->bookBranch<GlobalCollectionNames::collsize_t>(Form("n%s", ElectronHandler::colName.data()), 0);
 #define ELECTRON_VARIABLE(TYPE, NAME, DEFVAL) tree->bookArrayBranch<TYPE>(ElectronHandler::colName + "_" + #NAME, DEFVAL, GlobalCollectionNames::colMaxSize_electrons);
   ELECTRON_MOMENTUM_VARIABLES;
-  ELECTRON_EXTRA_UNUSED_VARIABLES_COMMON;
-  ELECTRON_EXTRA_USED_VARIABLES_COMMON;
-
-  auto const& dy = SampleHelpers::getDataYear();
+  ELECTRON_EXTRA_MANDATORY_VARIABLES_COMMON;
+  if (extractOptionalInfo){
+    ELECTRON_EXTRA_OPTIONAL_VARIABLES_COMMON;
+  }
   if (dy>=2015 && dy<=2018){
-    ELECTRON_EXTRA_UNUSED_VARIABLES_RUN2;
-    ELECTRON_EXTRA_USED_VARIABLES_RUN2;
+    ELECTRON_EXTRA_MANDATORY_VARIABLES_RUN2;
+    if (extractOptionalInfo){
+      ELECTRON_EXTRA_OPTIONAL_VARIABLES_RUN2;
+    }
   }
   else if (dy==2022){
-    ELECTRON_EXTRA_UNUSED_VARIABLES_RUN3;
-    ELECTRON_EXTRA_USED_VARIABLES_RUN3;
+    ELECTRON_EXTRA_MANDATORY_VARIABLES_RUN3;
+    if (extractOptionalInfo){
+      ELECTRON_EXTRA_OPTIONAL_VARIABLES_RUN3;
+    }
   }
   else{
     IVYerr << "ElectronHandler::bookBranches: Could not identify data year to determine year-dependent variable names." << endl;
