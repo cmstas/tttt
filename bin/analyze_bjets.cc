@@ -134,15 +134,12 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   // Options to set alternative muon and electron IDs, or b-tagging WP
   std::string muon_id_name;
   std::string electron_id_name;
-  std::string btag_WPname;
   if (use_shorthand_Run2_UL_proposal_config){
     muon_id_name = electron_id_name = "TopMVA_Run2";
-    btag_WPname = "loose";
   }
   else{
     extra_arguments.getNamedVal("muon_id", muon_id_name);
     extra_arguments.getNamedVal("electron_id", electron_id_name);
-    extra_arguments.getNamedVal("btag", btag_WPname);
   }
 
   if (muon_id_name!=""){
@@ -156,21 +153,6 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     ElectronSelectionHelpers::setSelectionTypeByName(electron_id_name);
   }
   else IVYout << "Using default electron id = " << ElectronSelectionHelpers::selection_type << "..." << endl;
-
-  AK4JetSelectionHelpers::SelectionBits bit_preselection_btag = AK4JetSelectionHelpers::kPreselectionTight_BTagged_Medium;
-  if (btag_WPname!=""){
-    std::string btag_WPname_lower;
-    HelperFunctions::lowercase(btag_WPname, btag_WPname_lower);
-    IVYout << "Switching to b-tagging WP " << btag_WPname_lower << "..." << endl;
-    if (btag_WPname_lower=="loose") bit_preselection_btag = AK4JetSelectionHelpers::kPreselectionTight_BTagged_Loose;
-    else if (btag_WPname_lower=="medium") bit_preselection_btag = AK4JetSelectionHelpers::kPreselectionTight_BTagged_Medium;
-    else if (btag_WPname_lower=="tight") bit_preselection_btag = AK4JetSelectionHelpers::kPreselectionTight_BTagged_Tight;
-    else{
-      IVYerr << "btag=" << btag_WPname << " is not implemented." << endl;
-      assert(0);
-    }
-  }
-  else IVYout << "Using default b-tagging WP = " << static_cast<int>(bit_preselection_btag)-static_cast<int>(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Loose) << "..." << endl;
 
   // Trigger configuration
   std::vector<TriggerHelpers::TriggerType> requiredTriggers_Dilepton{
@@ -497,14 +479,11 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       double event_wgt_SFs_btagging = 1;
       auto const& ak4jets = jetHandler.getAK4Jets();
       std::vector<AK4JetObject*> ak4jets_tight_selected;
-      unsigned int nbjets_tight = 0;
       for (auto const& jet:ak4jets){
         bool is_btaggable = jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTaggable);
-        bool is_btagged = jet->testSelectionBit(bit_preselection_btag);
         constexpr bool is_clean = true;
         if (is_btaggable){
           ak4jets_tight_selected.push_back(jet);
-          if (is_btagged) nbjets_tight++;
           if (!isData){
             float theSF_btag = 1;
             float theEff_btag = 1;
@@ -588,31 +567,6 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       /*************************************************/
       /* NO MORE CALLS TO SELECTION BEYOND THIS POINT! */
       /*************************************************/
-      // calculate min_mlb, Ht, min_mbb, max_mbb
-      float HT_ak4jets = 0.f;
-      float min_mlb = -1.f;
-      float min_mbb = -1.f;
-      float max_mbb = -1.f;
-      for (auto it_jet1=ak4jets_tight_selected.begin(); it_jet1!=ak4jets_tight_selected.end(); it_jet1++){
-        auto const& jet1 = *it_jet1;
-        bool is_btagged = jet1->testSelectionBit(bit_preselection_btag);
-        float pt_jet1 = jet1->pt();
-        HT_ak4jets += pt_jet1;
-        if (is_btagged){
-          for (auto const& lep:leptons_tight){
-            float mlb = (lep->p4() + jet1->p4()).M();
-            if (min_mlb<0.f || mlb<min_mlb) min_mlb = mlb;
-          }
-          for (auto it_jet2=it_jet1+1; it_jet2!=ak4jets_tight_selected.end(); it_jet2++){
-            auto const& jet2 = *it_jet2;
-            if (!jet2->testSelectionBit(bit_preselection_btag)) continue;
-            float mbb = (jet1->p4() + jet2->p4()).M();
-            if (min_mbb<0.f || mbb<min_mbb) min_mbb = mbb;
-            if (max_mbb<0.f || mbb>max_mbb) max_mbb = mbb;
-          }
-        }
-      }
-
       // Write output
       rcd_output.setNamedVal<float>("event_wgt", wgt);
       rcd_output.setNamedVal<float>("event_wgt_triggers_dilepton", event_wgt_triggers_dilepton);
@@ -628,11 +582,6 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         rcd_output.setNamedVal("LuminosityBlock", *ptr_LuminosityBlock);
       }
       rcd_output.setNamedVal("nak4jets_tight_pt25", njets_tight);
-      rcd_output.setNamedVal("nak4jets_tight_pt25_btagged", nbjets_tight);
-      rcd_output.setNamedVal("min_mlb", min_mlb);
-      rcd_output.setNamedVal("min_mbb", min_mbb);
-      rcd_output.setNamedVal("max_mbb", max_mbb);
-      rcd_output.setNamedVal("HT_ak4jets", HT_ak4jets);
       rcd_output.setNamedVal("pTmiss", pTmiss);
       rcd_output.setNamedVal("phimiss", phimiss);
 
@@ -666,14 +615,18 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
       {
         // make vectors of pt, eta, phi, mass, is_btagged, and hadronFlavour for jets
-        std::vector<bool> ak4jets_is_btagged;
+        std::vector<unsigned char> ak4jets_pass_btagging;
         std::vector<int> ak4jets_hadronFlavour;
         std::vector<float> ak4jets_pt;
         std::vector<float> ak4jets_eta;
         std::vector<float> ak4jets_phi;
         std::vector<float> ak4jets_mass;
         for (auto const& jet:ak4jets_tight_selected){
-          ak4jets_is_btagged.push_back(jet->testSelectionBit(bit_preselection_btag));
+          bool is_btagged_loose = jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Loose);
+          bool is_btagged_medium = jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Medium);
+          bool is_btagged_tight = jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Tight);
+          unsigned char pass_btagging = int(is_btagged_loose) + int(is_btagged_medium) + int(is_btagged_tight);
+          ak4jets_pass_btagging.push_back(pass_btagging);
           ak4jets_hadronFlavour.push_back(jet->extras.hadronFlavour);
           ak4jets_pt.push_back(jet->pt());
           ak4jets_eta.push_back(jet->eta());
@@ -682,7 +635,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         }
 
         // setNamedVal for pt, eta, phi, mass, is_btagged, and hadronFlavour for jets
-        rcd_output.setNamedVal("ak4jets_is_btagged", ak4jets_is_btagged);
+        rcd_output.setNamedVal("ak4jets_pass_btagging", ak4jets_pass_btagging);
         rcd_output.setNamedVal("ak4jets_hadronFlavour", ak4jets_hadronFlavour);
         rcd_output.setNamedVal("ak4jets_pt", ak4jets_pt);
         rcd_output.setNamedVal("ak4jets_eta", ak4jets_eta);
@@ -789,7 +742,7 @@ int main(int argc, char** argv){
       }
       extra_arguments.setNamedVal(wish, value);
     }
-    else if (wish=="muon_id" || wish=="electron_id" || wish=="btag" || wish=="output_file") extra_arguments.setNamedVal(wish, value);
+    else if (wish=="muon_id" || wish=="electron_id" || wish=="output_file") extra_arguments.setNamedVal(wish, value);
     else if (wish=="xsec"){
       if (xsec<0.) xsec = 1;
       xsec *= std::stod(value);
@@ -831,7 +784,6 @@ int main(int argc, char** argv){
       << "- shorthand_Run2_UL_proposal_config: Shorthand flag for the switches for the Run 2 UL analysis proposal:\n"
       << "  * muon_id='TopMVA_Run2'\n"
       << "  * electron_id='TopMVA_Run2'\n"
-      << "  * btag='loose'\n"
       << "  The use of this shorthand will ignore the user-defined setting of these options above.\n";
     IVYout
       << "- muon_id: Can be 'Cutbased_Run2', 'TopMVA_Run2', or 'TopMVAv2_Run2'.\n"
@@ -839,7 +791,6 @@ int main(int argc, char** argv){
     IVYout
       << "- electron_id: Can be 'Cutbased_Run2', 'TopMVA_Run2', or 'TopMVAv2_Run2'.\n"
       << "  Default is whatever is in ElectronSelectionHelpers (currently 'Cutbased_Run2') if no value is given.\n";
-    IVYout << "- btag: Name of the b-tagging WP. Can be 'medium' or 'loose' (case-insensitive). Default='medium'.\n";
 
     IVYout << endl;
     return (has_help ? 0 : 1);
