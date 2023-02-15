@@ -290,15 +290,16 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     jetHandler.bookBranches(tin);
 
     // Book a few additional branches
-    tin->bookBranch<EventNumber_t>("event", 0);
+#define RUNLUMIEVENT_VARIABLE(TYPE, NAME, NANONAME) tin->bookBranch<TYPE>(#NANONAME, 0);
+    EVENT_VARIABLE;
     if (!isData){
       tin->bookBranch<float>("GenMET_pt", 0);
       tin->bookBranch<float>("GenMET_phi", 0);
     }
     else{
-      tin->bookBranch<RunNumber_t>("run", 0);
-      tin->bookBranch<LuminosityBlock_t>("luminosityBlock", 0);
+      RUNLUMI_VARIABLES;
     }
+#undef RUNLUMIEVENT_VARIABLE
   }
 
   curdir->cd();
@@ -336,20 +337,21 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     electronHandler.wrapTree(tin);
     jetHandler.wrapTree(tin);
 
-    RunNumber_t* ptr_RunNumber = nullptr;
-    LuminosityBlock_t* ptr_LuminosityBlock = nullptr;
-    EventNumber_t* ptr_EventNumber = nullptr;
+#define RUNLUMIEVENT_VARIABLE(TYPE, NAME, NANONAME) TYPE* ptr_##NAME = nullptr;
+    RUNLUMIEVENT_VARIABLES;
+#undef RUNLUMIEVENT_VARIABLE
     float* ptr_genmet_pt = nullptr;
     float* ptr_genmet_phi = nullptr;
-    tin->getValRef("event", ptr_EventNumber);
+#define RUNLUMIEVENT_VARIABLE(TYPE, NAME, NANONAME) tin->getValRef(#NANONAME, ptr_##NAME);
+    EVENT_VARIABLE;
     if (!isData){
       tin->getValRef("GenMET_pt", ptr_genmet_pt);
       tin->getValRef("GenMET_phi", ptr_genmet_phi);
     }
     else{
-      tin->getValRef("run", ptr_RunNumber);
-      tin->getValRef("luminosityBlock", ptr_LuminosityBlock);
+      RUNLUMI_VARIABLES;
     }
+#undef RUNLUMIEVENT_VARIABLE
 
     unsigned int n_traversed = 0;
     unsigned int n_recorded = 0;
@@ -522,7 +524,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       seltracker.accumulate("Has exactly one tight muon", wgt);
 
       // check oppososite charge
-      if (electrons_tight.front()->pdgId() * muons_tight.front()->pdgId() > 0 ) continue;
+      if (electrons_tight.front()->pdgId() * muons_tight.front()->pdgId() > 0) continue;
       seltracker.accumulate("Has opposite charge", wgt);
 
       // check lep1 pt>25 lep2 pt>20
@@ -572,15 +574,17 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       rcd_output.setNamedVal<float>("event_wgt_triggers_dilepton", event_wgt_triggers_dilepton);
       rcd_output.setNamedVal<float>("event_wgt_triggers_dilepton_matched", event_wgt_triggers_dilepton_matched);
       rcd_output.setNamedVal<float>("event_wgt_SFs_btagging", event_wgt_SFs_btagging);
-      rcd_output.setNamedVal("EventNumber", *ptr_EventNumber);
+#define RUNLUMIEVENT_VARIABLE(TYPE, NAME, NANONAME) rcd_output.setNamedVal(#NAME, *ptr_##NAME);
+      EVENT_VARIABLE;
       if (!isData){
         rcd_output.setNamedVal("GenMET_pt", *ptr_genmet_pt);
         rcd_output.setNamedVal("GenMET_phi", *ptr_genmet_phi);
+        rcd_output.setNamedVal("genTtbarId", genInfo->extras.genTtbarId);
       }
       else{
-        rcd_output.setNamedVal("RunNumber", *ptr_RunNumber);
-        rcd_output.setNamedVal("LuminosityBlock", *ptr_LuminosityBlock);
+        RUNLUMI_VARIABLES;
       }
+#undef RUNLUMIEVENT_VARIABLE
       rcd_output.setNamedVal("nak4jets_tight_pt25", njets_tight);
       rcd_output.setNamedVal("pTmiss", pTmiss);
       rcd_output.setNamedVal("phimiss", phimiss);
