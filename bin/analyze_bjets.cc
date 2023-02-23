@@ -199,7 +199,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   SimpleEntry rcd_output;
   TFile* foutput = TFile::Open(stroutput, "recreate");
   foutput->cd();
-  BaseTree* tout = new BaseTree("Events");
+  BaseTree* tout = new BaseTree("SkimTree");
   tout->setAutoSave(0);
   curdir->cd();
 
