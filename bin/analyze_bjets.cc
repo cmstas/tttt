@@ -24,6 +24,7 @@
 #include "SimEventHandler.h"
 #include "GenInfoHandler.h"
 #include "BtagScaleFactorHandler.h"
+#include "IsotrackHandler.h"
 #include "SamplesCore.h"
 #include "FourTopTriggerHelpers.h"
 #include "DileptonHandler.h"
@@ -178,6 +179,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   MuonHandler muonHandler;
   ElectronHandler electronHandler;
   JetMETHandler jetHandler;
+  IsotrackHandler isotrackHandler;
 
   // SF handlers
   BtagScaleFactorHandler btagSFHandler;
@@ -199,7 +201,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   SimpleEntry rcd_output;
   TFile* foutput = TFile::Open(stroutput, "recreate");
   foutput->cd();
-  BaseTree* tout = new BaseTree("Events");
+  BaseTree* tout = new BaseTree("SkimTree");
   tout->setAutoSave(0);
   curdir->cd();
 
@@ -218,6 +220,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   unsigned int nevents_total_traversed = 0;
   std::vector<BaseTree*> tinlist; tinlist.reserve(dset_proc_pairs.size());
   std::unordered_map<BaseTree*, double> tin_normScale_map;
+  std::unordered_map<BaseTree*, double> tin_normScale_noPU_map;
   for (auto const& dset_proc_pair:dset_proc_pairs){
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
     TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
@@ -247,6 +250,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     }
 
     double sum_wgts = (isData ? 1 : 0);
+    double sum_wgts_noPU = (isData ? 1 : 0);
     if (!isData){
       int ix = 1;
       switch (theGlobalSyst){
@@ -261,6 +265,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       }
       TH2D* hCounters = (TH2D*) tin->getCountersHistogram();
       sum_wgts = hCounters->GetBinContent(ix, 1);
+      sum_wgts_noPU = hCounters->GetBinContent(0, 0);
     }
     if (sum_wgts==0.){
       IVYerr << "Sum of pre-recorded weights cannot be zero." << endl;
@@ -275,7 +280,10 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     // Data normalizaion factor is always 1.
     double norm_scale = (isData ? 1. : xsec * xsecScale * lumi)/sum_wgts;
     tin_normScale_map[tin] = norm_scale;
+    double norm_scale_noPU = (isData ? 1. : xsec * xsecScale * lumi)/sum_wgts_noPU;
+    tin_normScale_noPU_map[tin] = norm_scale_noPU;
     IVYout << "Acquired a sum of weights of " << sum_wgts << ". Overall normalization will be " << norm_scale << "." << endl;
+    IVYout << "\t- Without PU reweighting, the sum of weights would have been " << sum_wgts_noPU << " instead. Overall normalization would have become " << norm_scale_noPU << "." << endl;
 
     nevents_total += tin->getNEvents();
 
@@ -288,17 +296,21 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     muonHandler.bookBranches(tin);
     electronHandler.bookBranches(tin);
     jetHandler.bookBranches(tin);
+    isotrackHandler.bookBranches(tin);
 
     // Book a few additional branches
-    tin->bookBranch<EventNumber_t>("event", 0);
+    tin->bookBranch<int>("PV_npvsGood", 0);
+    tin->bookBranch<int>("PV_npvs", 0);
+#define RUNLUMIEVENT_VARIABLE(TYPE, NAME, NANONAME) tin->bookBranch<TYPE>(#NANONAME, 0);
+    EVENT_VARIABLE;
     if (!isData){
       tin->bookBranch<float>("GenMET_pt", 0);
       tin->bookBranch<float>("GenMET_phi", 0);
     }
     else{
-      tin->bookBranch<RunNumber_t>("run", 0);
-      tin->bookBranch<LuminosityBlock_t>("luminosityBlock", 0);
+      RUNLUMI_VARIABLES;
     }
+#undef RUNLUMIEVENT_VARIABLE
   }
 
   curdir->cd();
@@ -318,6 +330,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     if (SampleHelpers::doSignalInterrupt==1) break;
 
     auto const& norm_scale = tin_normScale_map.find(tin)->second;
+    auto const& norm_scale_noPU = tin_normScale_noPU_map.find(tin)->second;
     bool const isData = (is_sim_data_flag==1);
 
     // Wrap the ivies around the input tree:
@@ -335,21 +348,29 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     muonHandler.wrapTree(tin);
     electronHandler.wrapTree(tin);
     jetHandler.wrapTree(tin);
+    isotrackHandler.wrapTree(tin);
 
-    RunNumber_t* ptr_RunNumber = nullptr;
-    LuminosityBlock_t* ptr_LuminosityBlock = nullptr;
-    EventNumber_t* ptr_EventNumber = nullptr;
+    int* PV_npvs = nullptr;
+    tin->getValRef("PV_npvs", PV_npvs);
+
+    int* PV_npvsGood = nullptr;
+    tin->getValRef("PV_npvsGood", PV_npvsGood);
+
+#define RUNLUMIEVENT_VARIABLE(TYPE, NAME, NANONAME) TYPE* ptr_##NAME = nullptr;
+    RUNLUMIEVENT_VARIABLES;
+#undef RUNLUMIEVENT_VARIABLE
     float* ptr_genmet_pt = nullptr;
     float* ptr_genmet_phi = nullptr;
-    tin->getValRef("event", ptr_EventNumber);
+#define RUNLUMIEVENT_VARIABLE(TYPE, NAME, NANONAME) tin->getValRef(#NANONAME, ptr_##NAME);
+    EVENT_VARIABLE;
     if (!isData){
       tin->getValRef("GenMET_pt", ptr_genmet_pt);
       tin->getValRef("GenMET_phi", ptr_genmet_phi);
     }
     else{
-      tin->getValRef("run", ptr_RunNumber);
-      tin->getValRef("luminosityBlock", ptr_LuminosityBlock);
+      RUNLUMI_VARIABLES;
     }
+#undef RUNLUMIEVENT_VARIABLE
 
     unsigned int n_traversed = 0;
     unsigned int n_recorded = 0;
@@ -397,6 +418,8 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       simEventHandler.constructSimEvent();
 
       double wgt = 1;
+      double wgt_noPU = 1;
+      double l1prefire_wgt = 1;
       if (!isData){
         // Regular gen. weight
         double genwgt = 1;
@@ -407,12 +430,15 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         puwgt = simEventHandler.getPileUpWeight(theGlobalSyst);
 
         wgt = genwgt * puwgt;
+        wgt_noPU = genwgt;
 
         // Add L1 prefiring weight for 2016 and 2017
-        wgt *= simEventHandler.getL1PrefiringWeight(theGlobalSyst);
+        l1prefire_wgt = simEventHandler.getL1PrefiringWeight(theGlobalSyst);
       }
+      
       // Overall sample normalization
-      wgt *= norm_scale;
+      wgt *= norm_scale * l1prefire_wgt;
+      wgt_noPU *= norm_scale_noPU * l1prefire_wgt;
 
       muonHandler.constructMuons();
       electronHandler.constructElectrons();
@@ -475,6 +501,19 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
       ParticleObjectHelpers::sortByGreaterPt(leptons_tight);
 
+      // Clean the collection of isotracks from the selected leptons
+      isotrackHandler.constructIsotracks(muons, electrons); 
+      auto const& isotracks = isotrackHandler.getProducts();
+
+      bool pass_loose_isotrack_veto = true;
+      for (auto const& isotrack:isotracks){
+        if (isotrack->testSelectionBit(IsotrackSelectionHelpers::kPreselectionVeto)){
+          pass_loose_isotrack_veto=false;
+          break;
+        } 
+      }
+      
+
       // Keep track of jets
       double event_wgt_SFs_btagging = 1;
       auto const& ak4jets = jetHandler.getAK4Jets();
@@ -512,8 +551,8 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       // BEGIN PRESELECTION
       seltracker.accumulate("Full sample", wgt);
 
-      if (nleptons_fakeable+nleptons_loose>0) continue;
-      seltracker.accumulate("Has exactly 0 loose and 0 fakeable leptons", wgt);
+      // if (nleptons_fakeable+nleptons_loose>0) continue;
+      // seltracker.accumulate("Has exactly 0 loose and 0 fakeable leptons", wgt);
 
       if (electrons_tight.size()!=1) continue;
       seltracker.accumulate("Has exactly one tight electron", wgt);
@@ -522,7 +561,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       seltracker.accumulate("Has exactly one tight muon", wgt);
 
       // check oppososite charge
-      if (electrons_tight.front()->pdgId() * muons_tight.front()->pdgId() > 0 ) continue;
+      if (electrons_tight.front()->pdgId() * muons_tight.front()->pdgId() > 0) continue;
       seltracker.accumulate("Has opposite charge", wgt);
 
       // check lep1 pt>25 lep2 pt>20
@@ -569,18 +608,37 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       /*************************************************/
       // Write output
       rcd_output.setNamedVal<float>("event_wgt", wgt);
+      rcd_output.setNamedVal<float>("event_wgt_noPU", wgt_noPU);
+      rcd_output.setNamedVal<float>("event_wgt_adjustment_L1Prefiring", l1prefire_wgt);
       rcd_output.setNamedVal<float>("event_wgt_triggers_dilepton", event_wgt_triggers_dilepton);
       rcd_output.setNamedVal<float>("event_wgt_triggers_dilepton_matched", event_wgt_triggers_dilepton_matched);
       rcd_output.setNamedVal<float>("event_wgt_SFs_btagging", event_wgt_SFs_btagging);
-      rcd_output.setNamedVal("EventNumber", *ptr_EventNumber);
+
+      rcd_output.setNamedVal("nPVs_good", *PV_npvsGood);
+      rcd_output.setNamedVal("nPVs", *PV_npvs);
+
+      rcd_output.setNamedVal("nleptons_fakeable", nleptons_fakeable);
+      rcd_output.setNamedVal("nleptons_loose", nleptons_loose);
+      
+      rcd_output.setNamedVal<unsigned int>("nmuons_fakeable", muons_fakeable.size());
+      rcd_output.setNamedVal<unsigned int>("nelectrons_fakeable", electrons_fakeable.size());
+
+      rcd_output.setNamedVal<unsigned int>("nmuons_loose", muons_loose.size());
+      rcd_output.setNamedVal<unsigned int>("nelectrons_loose", electrons_loose.size());
+
+      rcd_output.setNamedVal<bool>("pass_loose_isotrack_veto", pass_loose_isotrack_veto);
+
+#define RUNLUMIEVENT_VARIABLE(TYPE, NAME, NANONAME) rcd_output.setNamedVal(#NAME, *ptr_##NAME);
+      EVENT_VARIABLE;
       if (!isData){
         rcd_output.setNamedVal("GenMET_pt", *ptr_genmet_pt);
         rcd_output.setNamedVal("GenMET_phi", *ptr_genmet_phi);
+        rcd_output.setNamedVal("genTtbarId", genInfo->extras.genTtbarId);
       }
       else{
-        rcd_output.setNamedVal("RunNumber", *ptr_RunNumber);
-        rcd_output.setNamedVal("LuminosityBlock", *ptr_LuminosityBlock);
+        RUNLUMI_VARIABLES;
       }
+#undef RUNLUMIEVENT_VARIABLE
       rcd_output.setNamedVal("nak4jets_tight_pt25", njets_tight);
       rcd_output.setNamedVal("pTmiss", pTmiss);
       rcd_output.setNamedVal("phimiss", phimiss);
