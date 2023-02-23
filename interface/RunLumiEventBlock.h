@@ -6,10 +6,20 @@ typedef unsigned int RunNumber_t;
 typedef unsigned int LuminosityBlock_t;
 typedef unsigned long long EventNumber_t;
 
-#define RUNLUMIEVENT_VARIABLES \
-RUNLUMIEVENT_VARIABLE(RunNumber_t, RunNumber, run) \
-RUNLUMIEVENT_VARIABLE(LuminosityBlock_t, LuminosityBlock, luminosityBlock) \
+#define RUN_VARIABLE \
+RUNLUMIEVENT_VARIABLE(RunNumber_t, RunNumber, run)
+#define LUMI_VARIABLE \
+RUNLUMIEVENT_VARIABLE(LuminosityBlock_t, LuminosityBlock, luminosityBlock)
+#define EVENT_VARIABLE \
 RUNLUMIEVENT_VARIABLE(EventNumber_t, EventNumber, event)
+
+#define RUNLUMI_VARIABLES \
+RUN_VARIABLE \
+LUMI_VARIABLE
+
+#define RUNLUMIEVENT_VARIABLES \
+RUNLUMI_VARIABLES \
+EVENT_VARIABLE
 
 
 class RunLumiEventBlock{

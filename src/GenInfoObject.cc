@@ -109,8 +109,11 @@ void GenInfoObject::acquireGenInfo(
 #undef GENINFO_NANOAOD_ARRAY_VARIABLE
 #undef GENINFO_NANOAOD_SCALAR_VARIABLE
 
+  extras.genTtbarId = genTtbarId;
+
   // FIXME: I don't know the conventions just yet, so for now, set all systematics to 1, and central weight to wgts[0]
   extras.genHEPMCweight = genWeight;
+  extras.LHEweight_unscaledOriginalWeight = LHEWeight_originalXWGTUP;
   // Weight vairations are supposed to be ratios to genHEPMCweight!
   // BE CAREFUL ABOUT HOW TO TAKE RATIOS!!!
 }
