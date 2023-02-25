@@ -502,7 +502,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       ParticleObjectHelpers::sortByGreaterPt(leptons_tight);
 
       // Clean the collection of isotracks from the selected leptons
-      isotrackHandler.constructIsotracks(muons, electrons); 
+      isotrackHandler.constructIsotracks(&muons, &electrons); 
       auto const& isotracks = isotrackHandler.getProducts();
 
       bool pass_loose_isotrack_veto = true;
