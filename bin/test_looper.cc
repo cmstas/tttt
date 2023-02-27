@@ -314,9 +314,8 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     //TString cinput = (input_files=="" ? strinput + "/DY_2l_M_50_1.root" : strinput + "/" + input_files.data());
     //TString cinput = (input_files=="" ? strinput + ("/DY_2l_M_50_1.root","/DY_2l_M_50_2.root","/DY_2l_M_50_3.root","/DY_2l_M_50_4.root","/DY_2l_M_50_5.root","/DY_2l_M_50_6.root","/DY_2l_M_50_7.root","/DY_2l_M_50_8.root","/DY_2l_M_50_9.root","/DY_2l_M_50_10.root") : strinput + "/" + input_files.data());
    
-
-		vector<TString> files {};
-		for (int i=1; i<3; i++){
+		vector<TString> files = {};
+		for (int i=1; i<6; i++){
 			TString file = (input_files=="" ? strinput + "/DY_2l_M_50_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
 			files.push_back(file);
 		} 
@@ -801,7 +800,8 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         bool isTight = dilepton->nTightDaughters()==2;
         bool isSF = dilepton->isSF();
         bool is_LowMass = dilepton->m()<12.;
-        bool is_ZClose = std::abs(dilepton->m()-91.2)<15.;
+        bool is_ZClose = std::abs(dilepton->m()-91.2)<45.;
+        //bool is_ZClose = true;
         bool is_DYClose = is_ZClose || is_LowMass;
 				
 				if (is_ZClose || (!isSS && isSF && is_LowMass) || (is_LowMass && isTight && std::abs((dilepton->getDaughter(0)->pdgId() == 11)))) has_mass_resonance=true;
