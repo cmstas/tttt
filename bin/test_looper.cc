@@ -313,9 +313,10 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
     //TString cinput = (input_files=="" ? strinput + "/DY_2l_M_50_1.root" : strinput + "/" + input_files.data());
     //TString cinput = (input_files=="" ? strinput + ("/DY_2l_M_50_1.root","/DY_2l_M_50_2.root","/DY_2l_M_50_3.root","/DY_2l_M_50_4.root","/DY_2l_M_50_5.root","/DY_2l_M_50_6.root","/DY_2l_M_50_7.root","/DY_2l_M_50_8.root","/DY_2l_M_50_9.root","/DY_2l_M_50_10.root") : strinput + "/" + input_files.data());
-   
+  	int n_files = 5; 
 		vector<TString> files = {};
-		for (int i=1; i<6; i++){
+		files.reserve(n_files);
+		for (int i=1; i<files.capacity()+1; i++){
 			TString file = (input_files=="" ? strinput + "/DY_2l_M_50_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
 			files.push_back(file);
 		} 
