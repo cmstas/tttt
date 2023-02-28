@@ -152,7 +152,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 	output_csv.open(stroutput_csv);
 
 	
-	output_csv << "event,# tight electrons,# tight muons,has_OS_pair,has_OS_Z_cand,has_SS_ZCand,n_leptons_matched,matched_correct" << endl;
+	output_csv << "event,# tight electrons,# tight muons,has_OS_pair,has_OS_Z_cand,has_SS_ZCand,n_leptons_matched,matched_correct" << "filtered_zcand_size" << endl;
   // In case the user wants to run on particular files
   std::string input_files;
   extra_arguments.getNamedVal("input_files", input_files);
@@ -801,7 +801,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         bool isTight = dilepton->nTightDaughters()==2;
         bool isSF = dilepton->isSF();
         bool is_LowMass = dilepton->m()<12.;
-        bool is_ZClose = std::abs(dilepton->m()-91.2)<45.;
+        bool is_ZClose = std::abs(dilepton->m()-91.2)<15.;
         //bool is_ZClose = true;
         bool is_DYClose = is_ZClose || is_LowMass;
 				
@@ -1246,8 +1246,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 			output_csv << has_dilepton_OS_ZCand_tight << ',';
 			output_csv << has_dilepton_SS_ZCand_tight << ',';
 			output_csv << n_matched << ',';
-			output_csv << n_matched_correct << endl;
- 
+			output_csv << n_matched_correct << ',';
+			output_csv << filtered_zcand.size() << endl;
+			 
       if (firstOutputEvent) firstOutputEvent = false;
     }
 		cout << "total dileptons vectors size " << total_dilepton_size << endl;
