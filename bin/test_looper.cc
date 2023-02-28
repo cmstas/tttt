@@ -152,7 +152,18 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 	output_csv.open(stroutput_csv);
 
 	
-	output_csv << "event,# tight electrons,# tight muons,has_OS_pair,has_OS_Z_cand,has_SS_ZCand,n_leptons_matched,matched_correct" << "filtered_zcand_size" << endl;
+	//output_csv << "event,# tight electrons,# tight muons,has_OS_pair,has_OS_Z_cand,has_SS_ZCand,n_leptons_matched,matched_correct" << "filtered_zcand_size" << endl;
+		
+	output_csv << "event" << ',';
+	output_csv << "tight_electrons" << ',';
+	output_csv << "tight_muons" << ',';
+	output_csv << "has_os_pair" << ',';
+	output_csv << "has_os_zcand" << ',';
+	output_csv << "has_ss_zcand" << ',';
+	output_csv << "n_leptons_matched" << ',';
+	output_csv << "matched_correct" << ',';
+	output_csv << "dileptons_vec_size" << endl;
+
   // In case the user wants to run on particular files
   std::string input_files;
   extra_arguments.getNamedVal("input_files", input_files);
