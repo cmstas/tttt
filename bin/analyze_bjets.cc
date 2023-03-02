@@ -156,12 +156,25 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   else IVYout << "Using default electron id = " << ElectronSelectionHelpers::selection_type << "..." << endl;
 
   // Trigger configuration
-  std::vector<TriggerHelpers::TriggerType> requiredTriggers_Dilepton{
+  std::vector<TriggerHelpers::TriggerType> requiredTriggers_DoubleMu{
+    TriggerHelpers::kDoubleMu
+  };
+  std::vector<TriggerHelpers::TriggerType> requiredTriggers_DoubleEle{
+    TriggerHelpers::kDoubleEle
+  };
+  std::vector<TriggerHelpers::TriggerType> requiredTriggers_MuEle{
     TriggerHelpers::kMuEle
   };
+
   // These PFHT triggers were used in the 2016 analysis. They are a bit more efficient.
   if (SampleHelpers::getDataYear()==2016){
-    requiredTriggers_Dilepton = std::vector<TriggerHelpers::TriggerType>{
+    requiredTriggers_DoubleMu = std::vector<TriggerHelpers::TriggerType>{
+      TriggerHelpers::kDoubleMu_PFHT
+    };
+    requiredTriggers_DoubleEle = std::vector<TriggerHelpers::TriggerType>{
+      TriggerHelpers::kDoubleEle_PFHT
+    };
+    requiredTriggers_MuEle = std::vector<TriggerHelpers::TriggerType>{
       TriggerHelpers::kMuEle_PFHT
     };
     // Related to triggers is how we apply loose and fakeable IDs in electrons.
@@ -169,13 +182,22 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     // If trigger choices change, this setting may not be relevant either.
     if (ElectronSelectionHelpers::selection_type == ElectronSelectionHelpers::kCutbased_Run2) ElectronSelectionHelpers::setApplyMVALooseFakeableNoIsoWPs(true);
   }
-  std::vector<std::string> const hltnames_Dilepton = TriggerHelpers::getHLTMenus(requiredTriggers_Dilepton);
-  auto triggerPropsCheckList_Dilepton = TriggerHelpers::getHLTMenuProperties(requiredTriggers_Dilepton);
+  std::vector<std::string> const hltnames_DoubleMu = TriggerHelpers::getHLTMenus(requiredTriggers_DoubleMu);
+  std::vector<std::string> const hltnames_DoubleEle = TriggerHelpers::getHLTMenus(requiredTriggers_DoubleEle);
+  std::vector<std::string> const hltnames_MuEle = TriggerHelpers::getHLTMenus(requiredTriggers_MuEle);
 
+  std::vector<TriggerHelpers::TriggerType> requiredTriggers_dilepton;
+  HelperFunctions::appendVector(requiredTriggers_dilepton, requiredTriggers_DoubleMu);
+  HelperFunctions::appendVector(requiredTriggers_dilepton, requiredTriggers_DoubleEle);
+  HelperFunctions::appendVector(requiredTriggers_dilepton, requiredTriggers_MuEle);
+
+  // This is the only time matching is used since the three triggers are disjoint.
+  auto triggerPropsCheckList_Dilepton = TriggerHelpers::getHLTMenuProperties(requiredTriggers_dilepton);
+  
   // Declare handlers
   GenInfoHandler genInfoHandler;
   SimEventHandler simEventHandler;
-  EventFilterHandler eventFilter(requiredTriggers_Dilepton);
+  EventFilterHandler eventFilter(requiredTriggers_dilepton);
   MuonHandler muonHandler;
   ElectronHandler electronHandler;
   JetMETHandler jetHandler;
@@ -548,21 +570,42 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       // MET info
       auto const& eventmet = jetHandler.getPFMET();
 
+      // get the dileptons
+      dileptonHandler.constructDileptons(&muons_tight, &electrons_tight);
+      auto const& dileptons = dileptonHandler.getProducts();
+
+      // check if ee mumu or emu
+      DileptonObject* dilepton_OS_ZCand = nullptr; 
+      DileptonObject* dilepton_OS_MuEle = nullptr;
+      DileptonObject* dilepton_Other = nullptr;
+      for (auto const& dilepton:dileptons){
+        bool isSS = !dilepton->isOS();
+        bool isSF = dilepton->isSF();
+        bool is_ZClose = std::abs(dilepton->m()-91.2)<30.;
+        
+        if (!isSS){ 
+            if (isSF && !dilepton_OS_ZCand) dilepton_OS_ZCand = dilepton;
+            else if (!isSF && !dilepton_OS_MuEle) dilepton_OS_MuEle = dilepton;
+            else if (!dilepton_Other) dilepton_Other = dilepton;
+        }
+        else if (!dilepton_Other) dilepton_Other = dilepton;
+      }
+
       // BEGIN PRESELECTION
       seltracker.accumulate("Full sample", wgt);
 
-      // if (nleptons_fakeable+nleptons_loose>0) continue;
-      // seltracker.accumulate("Has exactly 0 loose and 0 fakeable leptons", wgt);
 
-      if (electrons_tight.size()!=1) continue;
-      seltracker.accumulate("Has exactly one tight electron", wgt);
+      // Select OS emu, or ee mumu in Z window
 
-      if (muons_tight.size()!=1) continue;
-      seltracker.accumulate("Has exactly one tight muon", wgt);
+      // this is not ee mumu or emu
+      if (!dilepton_OS_ZCand && !dilepton_OS_MuEle) continue;
 
-      // check oppososite charge
-      if (electrons_tight.front()->pdgId() * muons_tight.front()->pdgId() > 0) continue;
-      seltracker.accumulate("Has opposite charge", wgt);
+      // there are three leptons, so e+-e-+mu-+ or mu+-mu-+e-+
+      if (dilepton_OS_ZCand && dilepton_OS_MuEle)  continue;
+
+      // any dilepton pairs that are not covered by the other cases
+      if (dilepton_Other) continue;
+      seltracker.accumulate("Has OS emu, or OS ee mumu in Z window exclusively", wgt);
 
       // check lep1 pt>25 lep2 pt>20
       if (leptons_tight.front()->pt() < 25. || leptons_tight.back()->pt() < 20.) continue;
@@ -589,8 +632,10 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       seltracker.accumulate("Pass unique event check", wgt);
 
       // Triggers
-      float event_wgt_triggers_dilepton = eventFilter.getTriggerWeight(hltnames_Dilepton);
-      if (event_wgt_triggers_dilepton==0.f) continue;
+      float event_wgt_triggers_MuEle = eventFilter.getTriggerWeight(hltnames_MuEle);
+      float event_wgt_triggers_DoubleMu = eventFilter.getTriggerWeight(hltnames_DoubleMu);
+      float event_wgt_triggers_DoubleEle = eventFilter.getTriggerWeight(hltnames_DoubleEle);
+      if (event_wgt_triggers_MuEle + event_wgt_triggers_DoubleMu + event_wgt_triggers_DoubleEle == 0.f) continue;
       seltracker.accumulate("Pass any trigger", wgt);
 
       float event_wgt_triggers_dilepton_matched = eventFilter.getTriggerWeight(
@@ -610,7 +655,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       rcd_output.setNamedVal<float>("event_wgt", wgt);
       rcd_output.setNamedVal<float>("event_wgt_noPU", wgt_noPU);
       rcd_output.setNamedVal<float>("event_wgt_adjustment_L1Prefiring", l1prefire_wgt);
-      rcd_output.setNamedVal<float>("event_wgt_triggers_dilepton", event_wgt_triggers_dilepton);
+      rcd_output.setNamedVal<float>("event_wgt_triggers_MuEle", event_wgt_triggers_MuEle);
+      rcd_output.setNamedVal<float>("event_wgt_triggers_DoubleEle", event_wgt_triggers_DoubleEle);
+      rcd_output.setNamedVal<float>("event_wgt_triggers_DoubleMu", event_wgt_triggers_DoubleMu);
       rcd_output.setNamedVal<float>("event_wgt_triggers_dilepton_matched", event_wgt_triggers_dilepton_matched);
       rcd_output.setNamedVal<float>("event_wgt_SFs_btagging", event_wgt_SFs_btagging);
 
@@ -642,6 +689,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       rcd_output.setNamedVal("nak4jets_tight_pt25", njets_tight);
       rcd_output.setNamedVal("pTmiss", pTmiss);
       rcd_output.setNamedVal("phimiss", phimiss);
+
+      rcd_output.setNamedVal<int>("dilepton_id", leptons_tight.front()->pdgId()*leptons_tight.back()->pdgId());
+      rcd_output.setNamedVal<float>("dilepton_mass", (leptons_tight.front()->p4() + leptons_tight.back()->p4()).M()); 
 
       {
         // make vectors of pt, eta, phi, mass, pdgId for leptons
