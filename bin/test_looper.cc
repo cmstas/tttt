@@ -36,6 +36,7 @@ This is an example looper to go through the different setup, looper, and output 
 #include "SplitFileAndAddForTransfer.h"
 #include <fstream>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 using namespace IvyStreamHelpers;
@@ -150,8 +151,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 	IVYout.open(stroutput_log.Data());
   IVYerr.open(stroutput_err.Data());
 	output_csv.open(stroutput_csv);
-
 	
+	IVYout << "test sentence ........" << endl;
+		
 	//output_csv << "event,# tight electrons,# tight muons,has_OS_pair,has_OS_Z_cand,has_SS_ZCand,n_leptons_matched,matched_correct" << "filtered_zcand_size" << endl;
 		
 	output_csv << "event" << ',';
@@ -480,8 +482,10 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 		int n_cut_events = 0;
 		cout << "number of entries " << nEntries << endl;
 		int jet_requirement = 0; int pTmiss_requirement = 0;
-		int total_my_code_dileptons = 0;
 		int total_dilepton_size = 0;
+
+		vector<int> events_ss_wrong = {388394813,326775309,326762001,378904733,329197036,332589448,493625445,514693114};
+
     for (int ev=0; ev<nEntries; ev++){
       if (SampleHelpers::doSignalInterrupt==1) break;
 			//n_events++;
@@ -791,7 +795,8 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       // Construct all possible dilepton pairs
       // Note that loose leptons are included as well in the 'selected' collection
       // so that dilepton vetos can be done easily next.
-      dileptonHandler.constructDileptons(&muons_selected, &electrons_selected);
+      //dileptonHandler.constructDileptons(&muons_selected, &electrons_selected);
+      dileptonHandler.constructDileptons(&muons_tight, &electrons_tight);
       auto const& dileptons = dileptonHandler.getProducts();
 			//cout << "Dileptons passed have size " << dileptons.size() << endl;
       // Dilepton vetos
@@ -1036,8 +1041,17 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 						n_matched += 2;
 						
 						int product_1 = pdgId_1*match_pdgId_1, product_2 = pdgId_2*match_pdgId_2;
-						if (product_1>0) n_matched_correct++;
-						if (product_2>0) n_matched_correct++; 
+						if (product_1>0) {n_matched_correct++;}
+						if (product_2>0) {n_matched_correct++;}
+						
+						if (find(events_ss_wrong.begin(), events_ss_wrong.end(),*ptr_EventNumber) != events_ss_wrong.end()){
+							IVYout << *ptr_EventNumber << endl;
+							IVYout << "first particle pdgID " << pdgId_1 << " matched to " << match_pdgId_1 << endl;
+							IVYout << "second particle pdgID " << pdgId_2 << " matched to " << match_pdgId_2 << endl;
+						
+					}	
+						
+ 
 						//cout << pdgId_2 << ',' << match_pdgId_2 << ',' << pdgId_1 << ',' << match_pdgId_1 << endl;
 					}
 					
@@ -1263,7 +1277,6 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       if (firstOutputEvent) firstOutputEvent = false;
     }
 		cout << "total dileptons vectors size " << total_dilepton_size << endl;
-		cout << "after adding my code " << total_my_code_dileptons << endl;
 		cout << "cut with jet requirement " << jet_requirement << endl;
 		cout << "cut with miss pT requirement " << pTmiss_requirement << endl; 
 		cout << "number of dileptons is " << n_dileptons << endl;
