@@ -326,7 +326,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
     //TString cinput = (input_files=="" ? strinput + "/DY_2l_M_50_1.root" : strinput + "/" + input_files.data());
     //TString cinput = (input_files=="" ? strinput + ("/DY_2l_M_50_1.root","/DY_2l_M_50_2.root","/DY_2l_M_50_3.root","/DY_2l_M_50_4.root","/DY_2l_M_50_5.root","/DY_2l_M_50_6.root","/DY_2l_M_50_7.root","/DY_2l_M_50_8.root","/DY_2l_M_50_9.root","/DY_2l_M_50_10.root") : strinput + "/" + input_files.data());
-  	int n_files = 1; 
+  	int n_files = 5; 
 		vector<TString> files = {};
 		files.reserve(n_files);
 		for (int i=1; i<files.capacity()+1; i++){
@@ -1048,12 +1048,12 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 						if (product_1>0) {n_matched_correct++;}
 						if (product_2>0) {n_matched_correct++;}
 						
-						if (find(events_ss_wrong.begin(), events_ss_wrong.end(),*ptr_EventNumber) != events_ss_wrong.end()){
+					/*	if (find(events_ss_wrong.begin(), events_ss_wrong.end(),*ptr_EventNumber) != events_ss_wrong.end()){
 							IVYout << *ptr_EventNumber << endl;
 							IVYout << "first particle pdgID " << pdgId_1 << " matched to " << match_pdgId_1 << endl;
 							IVYout << "second particle pdgID " << pdgId_2 << " matched to " << match_pdgId_2 << endl;
 						
-					}	
+					}	*/
 						
  
 						//cout << pdgId_2 << ',' << match_pdgId_2 << ',' << pdgId_1 << ',' << match_pdgId_1 << endl;
