@@ -41,7 +41,7 @@ void hist_merged(){
 	TH1F* eta_trailing_os = new TH1F("eta_trailing_os","eta_trailing_os",20,0,3);
 	TH1F* phi_trailing_os = new TH1F("phi_trailing_os","phi_trailing_os",20,-5,5);
 	
-	TH1F* boson_mass_os = new TH1F("zboson_mass_os","zboson_mass_os",40,0,200);
+	TH1F* boson_mass_os = new TH1F("zboson_mass_os","zboson_mass_os",50,50,110);
 	TH1F* total_pt_os = new TH1F("total_pt_os","total_pt_os",50,0,200);
 	TH2F* misidentification_hist_os = new TH2F("misidentification_plot_os","misidentification_plot_os",50,-15,15,70,-15,40);
 	
@@ -58,7 +58,7 @@ void hist_merged(){
 	TH1F* eta_trailing_ss = new TH1F("eta_trailing_ss","eta_trailing_ss",20,0,3);
 	TH1F* phi_trailing_ss = new TH1F("phi_trailing_ss","phi_trailing_ss",20,-5,5);
 	
-	TH1F* boson_mass_ss = new TH1F("zboson_mass_ss","zboson_mass_ss",40,0,200);
+	TH1F* boson_mass_ss = new TH1F("zboson_mass_ss","zboson_mass_ss",50,50,110);
 	TH1F* total_pt_ss = new TH1F("total_pt_ss","total_pt_ss",50,0,200);
 	TH2F* misidentification_hist_ss = new TH2F("misidentification_plot_ss","misidentification_plot_ss",50,-15,15,70,-15,40);
 	
@@ -105,7 +105,6 @@ void hist_merged(){
 
 }			
 }
-	cout << counter << " yay" << endl;	
 	output->Write();
 	//pt_hist->Write();eta_hist->Write();phi_hist->Write();	
 	//pt_leading->Write();eta_leading->Write();phi_leading->Write();	
