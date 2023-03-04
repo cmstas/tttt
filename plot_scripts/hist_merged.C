@@ -66,7 +66,6 @@ void hist_merged(){
 
 	misidentification_hist_ss->SetStats(0);
 	misidentification_hist_ss->SetFillColor(kGreen-9);
-	int counter = 0;
 	int entries = tree->GetEntries();
 
 	for (int i=0; i<entries; i++){
@@ -89,7 +88,6 @@ void hist_merged(){
 
 				}
 				else {
-				counter++;
 				boson_mass_ss->Fill((*dileptons_mass)[j]);
 				pt_leading_ss->Fill((*dileptons_leading_pt)[j]);	
 				pt_trailing_ss->Fill((*dileptons_trailing_pt)[j]);
