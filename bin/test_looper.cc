@@ -107,7 +107,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   // Output should always be recorded as if you are running the job locally.
   // If we are running on Condor, we will inform the batch job later on that some files would need transfer.
   TString coutput_main = TString("output/ExampleLooper/") + strdate.data() + "/" + theDataPeriod;
-  if (!isCondorRun) coutput_main = ANALYSISPKGPATH + "/test/" + coutput_main;
+  if (!isCondorRun) coutput_main = ANALYSISPKGPATH + "/test/" + coutput_main + "/merged_branches";
   HostHelpers::ExpandEnvironmentVariables(coutput_main);
   gSystem->mkdir(coutput_main, true);
 
@@ -326,7 +326,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
     //TString cinput = (input_files=="" ? strinput + "/DY_2l_M_50_1.root" : strinput + "/" + input_files.data());
     //TString cinput = (input_files=="" ? strinput + ("/DY_2l_M_50_1.root","/DY_2l_M_50_2.root","/DY_2l_M_50_3.root","/DY_2l_M_50_4.root","/DY_2l_M_50_5.root","/DY_2l_M_50_6.root","/DY_2l_M_50_7.root","/DY_2l_M_50_8.root","/DY_2l_M_50_9.root","/DY_2l_M_50_10.root") : strinput + "/" + input_files.data());
-  	int n_files = 5; 
+  	int n_files = 1; 
 		vector<TString> files = {};
 		files.reserve(n_files);
 		for (int i=1; i<files.capacity()+1; i++){
@@ -856,7 +856,11 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 					
 					filtered_zcand.push_back(dilepton_SS_ZCand_tight);
 }
+				if ((dilepton_SS_ZCand_tight == nullptr) && (dilepton_OS_ZCand_tight == nullptr)) {
+					fail_vetos = true;
+					break;
 				
+				}	
 
 } 
 //			cout  << "Passed dileptons per event " << passed_dileptons << endl; 			
@@ -1010,12 +1014,12 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 				BRANCH_VECTOR_COMMAND(float,pdgId_2) \
 				BRANCH_VECTOR_COMMAND(float,match_pdgId_2) \ 
 				BRANCH_VECTOR_COMMAND(int, nJets)				
-#define BRANCH_VECTOR_COMMAND(TYPE, NAME) std::vector<TYPE> dileptons_OS_##NAME;
+#define BRANCH_VECTOR_COMMAND(TYPE, NAME) std::vector<TYPE> dileptons_##NAME;
         BRANCH_VECTOR_COMMANDS;
 #undef BRANCH_VECTOR_COMMAND
 
         for (auto const& dilepton:filtered_zcand){
-					if (has_dilepton_OS_ZCand_tight){ 	
+					if (has_dilepton_OS_ZCand_tight || has_dilepton_SS_ZCand_tight){ 	
 					float mass = dilepton->mass();
 					float lpt = dilepton->getDaughter_leadingPt()->pt();
 					float tpt = dilepton->getDaughter_subleadingPt()->pt(); 	
@@ -1084,7 +1088,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 					int nJets = numJets;
 
 
-#define BRANCH_VECTOR_COMMAND(TYPE, NAME) dileptons_OS_##NAME.push_back(NAME);
+#define BRANCH_VECTOR_COMMAND(TYPE, NAME) dileptons_##NAME.push_back(NAME);
           BRANCH_VECTOR_COMMANDS;
 #undef BRANCH_VECTOR_COMMAND
 
@@ -1095,14 +1099,14 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         
 }
 
-#define BRANCH_VECTOR_COMMAND(TYPE, NAME) rcd_output.setNamedVal(Form("dileptons_OS_%s", #NAME), dileptons_OS_##NAME);
+#define BRANCH_VECTOR_COMMAND(TYPE, NAME) rcd_output.setNamedVal(Form("dileptons_%s", #NAME), dileptons_##NAME);
         BRANCH_VECTOR_COMMANDS;
 #undef BRANCH_VECTOR_COMMAND
 
 #undef BRANCH_VECTOR_COMMANDS
 }
 
-
+/*
 //Record SS dileptons
  {
 #define BRANCH_VECTOR_COMMANDS \
@@ -1204,7 +1208,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 #undef BRANCH_VECTOR_COMMANDS
 }
 
-
+*/
       // Record ak4jets
       {
 #define BRANCH_VECTOR_COMMANDS \
