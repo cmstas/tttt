@@ -321,7 +321,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   for (auto const& dset_proc_pair:dset_proc_pairs){
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
     //TString cinput = (input_files=="" ? strinput + "/DY_2l_M_50_1.root" : strinput + "/" + input_files.data());
-  	int n_files = 5; 
+  	int n_files = 10; 
 		vector<TString> files = {};
 		files.reserve(n_files);
 		for (int i=1; i<files.capacity()+1; i++){
@@ -551,8 +551,6 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       // That is required in TopLeptonMVA computations! That is why disambiguation comes before setting selection bits!
       // ParticleDisambiguator then cleans all geometrically overlapping jets by moving them to the ak4jets_masked collection of JetMETHandler.
       particleDisambiguator.disambiguateParticles(&muonHandler, &electronHandler, nullptr, &jetHandler);
-			n_cut_events++;
-			//cout << "cut events are " << n_cut_events << endl;	
       /***********/
       /* LEPTONS */
       /***********/
