@@ -35,6 +35,16 @@ dataset,short_name,period,xsec,BR,extra_arguments
 /TTJets_SingleLeptFromTbar_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM,TT_lnu_antitop_lo,2017,182.96,1,skipSkimReqs=True
 # TT0J_2l2nu_nlo,data set for TT_DiLept_TuneCP5_13TeV-amcatnlo-pythia8,xsec = 81.32 BR = 1 from scale1fbs.txt,,,
 # TT1J_2l2nu_nlo,data set for TTPlus1Jet_DiLept_TuneCP5_13TeV-amcatnloFXFX-pythia8,xsec = 72.48 BR = 1 from scale1fbs.txt,,,
+# TTbb_4f_2l2nu,data set for TTbb_4f_TTTo2L2Nu_TuneCP5-Powheg-Openloops-Pythia8,xsec = 43.7 BR = 0.105 using AN-21-040,,,
+/TTbb_4f_TTTo2L2Nu_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODAPVv9-106X_mcRun2_asymptotic_preVFP_v11-v1/NANOAODSIM,TTbb_4f_2l2nu,2016_APV,43.7,0.105,
+/TTbb_4f_TTTo2L2Nu_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODv9-106X_mcRun2_asymptotic_v17-v1/NANOAODSIM,TTbb_4f_2l2nu,2016_NonAPV,43.7,0.105,
+/TTbb_4f_TTTo2L2Nu_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM,TTbb_4f_2l2nu,2017,43.7,0.105,
+/TTbb_4f_TTTo2L2Nu_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM,TTbb_4f_2l2nu,2018,43.7,0.105,
+# TTbb_4f_lnu,data set for TTbb_4f_TTToSemiLeptonic_TuneCP5-Powheg-Openloops-Pythia8,xsec = 43.7 BR = 0.438 using AN-21-040,,,
+/TTbb_4f_TTToSemiLeptonic_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODAPVv9-106X_mcRun2_asymptotic_preVFP_v11-v1/NANOAODSIM,TTbb_4f_lnu,2016_APV,43.7,0.438,
+/TTbb_4f_TTToSemiLeptonic_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODv9-106X_mcRun2_asymptotic_v17-v1/NANOAODSIM,TTbb_4f_lnu,2016_NonAPV,43.7,0.438,
+/TTbb_4f_TTToSemiLeptonic_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM,TTbb_4f_lnu,2017,43.7,0.438,
+/TTbb_4f_TTToSemiLeptonic_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM,TTbb_4f_lnu,2018,43.7,0.438,
 # TTZ_2l_M_1to10,data set for TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8,xsec = 0.0493 BR = 1 from scale1fbs.txt,,,
 /TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv9-106X_mcRun2_asymptotic_preVFP_v11-v1/NANOAODSIM,TTZ_2l_M_1to10,2016_APV,0.0493,1,skipSkimReqs=True
 /TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv9-106X_mcRun2_asymptotic_v17-v1/NANOAODSIM,TTZ_2l_M_1to10,2016_NonAPV,0.0493,1,skipSkimReqs=True

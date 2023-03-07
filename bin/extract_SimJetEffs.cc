@@ -233,6 +233,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
     {
       TH2D* hCounters = (TH2D*) tin->getCountersHistogram();
       double const sumN = hCounters->GetBinContent(0, 2);
+      double const sum_wgts_NoPU = hCounters->GetBinContent(0, 0);
       for (auto const& ss:allowedSysts_GenSim){
         int ix = 1;
         switch (ss){
@@ -245,7 +246,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         default:
           break;
         }
-        double sum_wgts = hCounters->GetBinContent(ix, 1);;
+        double sum_wgts = hCounters->GetBinContent(ix, 1);
         normScales[ss] = (sum_wgts!=0. ? sumN / sum_wgts : 1.);
         IVYout << "Acquired a sum of weights of " << sum_wgts << " for systematic " << SystematicsHelpers::getSystName(ss) << ". Overall normalization will be " << normScales[ss] << "." << endl;
       }
@@ -331,17 +332,24 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
       double wgt_nominal = 1;
       for(auto const& syst:allowedSysts_GenSim){
-        double wgt = normScales.find(syst)->second;
-        wgt *= genInfo->getGenWeight(syst);
-        wgt *= simEventHandler.getPileUpWeight(syst);
-        wgt *= simEventHandler.getL1PrefiringWeight(syst);
+        double const wgt_Gen = genInfo->getGenWeight(syst);
+        double const wgt_PU = simEventHandler.getPileUpWeight(syst);
+        double const wgt_L1Prefiring = simEventHandler.getL1PrefiringWeight(syst);
+        double const& wgt_norm_syst = normScales.find(syst)->second;
+
+        double const wgt_SimOnly = wgt_PU*wgt_L1Prefiring;
+        double const wgt = wgt_Gen*wgt_SimOnly*wgt_norm_syst;
         if (syst == sNominal) wgt_nominal = wgt;
+
         rcd_output.setNamedVal(Form("event_wgt_%s", SystematicsHelpers::getSystName(syst).data()), wgt);
+        rcd_output.setNamedVal(Form("event_wgt_SimOnly_%s", SystematicsHelpers::getSystName(syst).data()), wgt_SimOnly);
       }
 
       // ak4jet output variables
 #define SYNC_AK4JETS_BRANCH_VECTOR_COMMANDS \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(unsigned short, ak4jets, btagcat) \
+      SYNC_OBJ_BRANCH_VECTOR_COMMAND(int, ak4jets, hadronFlavour) \
+      SYNC_OBJ_BRANCH_VECTOR_COMMAND(int, ak4jets, partonFlavour) \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, ak4jets, pt) \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, ak4jets, eta) \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, ak4jets, phi) \
@@ -349,8 +357,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, ak4jets, genjet_pt) \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, ak4jets, genjet_eta) \
       SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, ak4jets, genjet_phi) \
-      SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, ak4jets, genjet_mass) \
-      AK4JET_EXTRA_INPUT_VARIABLES
+      SYNC_OBJ_BRANCH_VECTOR_COMMAND(float, ak4jets, genjet_mass)
       // All outputs
 #define SYNC_ALLOBJS_BRANCH_VECTOR_COMMANDS \
       SYNC_AK4JETS_BRANCH_VECTOR_COMMANDS
@@ -427,6 +434,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
           if (jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Loose)) btagcat++;
           if (jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Medium)) btagcat++;
           if (jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Tight)) btagcat++;
+
+          auto const& hadronFlavour = jet->extras.hadronFlavour;
+          auto const& partonFlavour = jet->extras.partonFlavour;
 
           float genjet_pt = -1;
           float genjet_eta = 0;
