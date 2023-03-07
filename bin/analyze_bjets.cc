@@ -578,13 +578,14 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       DileptonObject* dilepton_OS_ZCand = nullptr; 
       DileptonObject* dilepton_OS_MuEle = nullptr;
       DileptonObject* dilepton_Other = nullptr;
+
       for (auto const& dilepton:dileptons){
         bool isSS = !dilepton->isOS();
         bool isSF = dilepton->isSF();
         bool is_ZClose = std::abs(dilepton->m()-91.2)<30.;
         
         if (!isSS){ 
-            if (isSF && !dilepton_OS_ZCand) dilepton_OS_ZCand = dilepton;
+            if (isSF && is_ZClose && !dilepton_OS_ZCand) dilepton_OS_ZCand = dilepton;
             else if (!isSF && !dilepton_OS_MuEle) dilepton_OS_MuEle = dilepton;
             else if (!dilepton_Other) dilepton_Other = dilepton;
         }
@@ -599,9 +600,11 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
       // this is not ee mumu or emu
       if (!dilepton_OS_ZCand && !dilepton_OS_MuEle) continue;
+      seltracker.accumulate("Has OS ZCand or OS emu", wgt);
 
       // there are three leptons, so e+-e-+mu-+ or mu+-mu-+e-+
       if (dilepton_OS_ZCand && dilepton_OS_MuEle)  continue;
+      seltracker.accumulate("does not have both OS ZCand and OS emu", wgt);
 
       // any dilepton pairs that are not covered by the other cases
       if (dilepton_Other) continue;
