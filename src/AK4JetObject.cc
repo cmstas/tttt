@@ -86,14 +86,19 @@ BTagEntry::JetFlavor AK4JetObject::getBTagJetFlavor() const{
   else if (std::abs(jetFlavor)==4) return BTagEntry::FLAV_C;
   else return BTagEntry::FLAV_UDSG;
 }
-float AK4JetObject::getBtagValue() const{
-  switch (AK4JetSelectionHelpers::btagger_type){
+float AK4JetObject::getBtagValue(BtagHelpers::BtagWPType type) const{
+  if (type==BtagHelpers::nBtagWPTypes) type = AK4JetSelectionHelpers::btagger_type;
+  switch (type){
   case BtagHelpers::kDeepFlav_Loose:
   case BtagHelpers::kDeepFlav_Medium:
   case BtagHelpers::kDeepFlav_Tight:
     return this->extras.btagDeepFlavB;
+  case BtagHelpers::kDeepCSV_Loose:
+  case BtagHelpers::kDeepCSV_Medium:
+  case BtagHelpers::kDeepCSV_Tight:
+    return this->extras.btagDeepB;
   default:
-    IVYerr << "AK4JetObject::getBtagValue: b-tagger type " << AK4JetSelectionHelpers::btagger_type << " is not implemented. Aborting..." << endl;
+    IVYerr << "AK4JetObject::getBtagValue: b-tagger type " << type << " is not implemented. Aborting..." << endl;
     assert(0);
   }
   return -1;

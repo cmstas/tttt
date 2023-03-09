@@ -2,6 +2,7 @@
 #define AK4JETOBJECT_H
 
 #include "ParticleObject.h"
+#include "BtagHelpers.h"
 #include "BTagCalibrationStandalone.h"
 #include "SystematicVariations.h"
 
@@ -20,7 +21,8 @@ AK4JET_VARIABLE(float, area, 0) \
 AK4JET_VARIABLE(float, muonSubtrFactor, 0) \
 AK4JET_VARIABLE(float, muEF, 0) \
 AK4JET_VARIABLE(float, rawFactor, 0) \
-AK4JET_VARIABLE(float, btagDeepFlavB, 0)
+AK4JET_VARIABLE(float, btagDeepFlavB, 0) \
+AK4JET_VARIABLE(float, btagDeepB, 0)
 
 // These variables are a subset of AK4JET_COMMON_VARIABLES, so there is no need to define them twice in the extras.
 // Nevertheless, define them through a different command set (i.e., AK4JET_LOWPT_VARIABLE instead of AK4JET_VARIABLE).
@@ -92,7 +94,8 @@ public:
   void makeFinalMomentum(SystematicsHelpers::SystematicVariationTypes const& syst);
 
   BTagEntry::JetFlavor getBTagJetFlavor() const;
-  float getBtagValue() const;
+  float getBtagValue(BtagHelpers::BtagWPType type = BtagHelpers::nBtagWPTypes) const;
+
 };
 
 #endif

@@ -82,6 +82,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   ParticleSelectionHelpers::setUseFakeableIdForPhysicsChecks(useFakeableIdForPhysicsChecks);
 
   float const absEtaThr_ak4jets = (theDataYear<=2016 ? AK4JetSelectionHelpers::etaThr_btag_Phase0Tracker : AK4JetSelectionHelpers::etaThr_btag_Phase1Tracker);
+  AK4JetSelectionHelpers::setBTaggerType(BtagHelpers::kDeepFlav_Loose);
 
   // This is the output directory.
   // Output should always be recorded as if you are running the job locally.
@@ -430,10 +431,19 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
           float phi = jet->phi();
           float mass = jet->mass();
 
-          unsigned short btagcat = 0;
-          if (jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Loose)) btagcat++;
-          if (jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Medium)) btagcat++;
-          if (jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Tight)) btagcat++;
+          unsigned short btagcat_DF = 0;
+          if (jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Loose)) btagcat_DF++;
+          if (jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Medium)) btagcat_DF++;
+          if (jet->testSelectionBit(AK4JetSelectionHelpers::kPreselectionTight_BTagged_Tight)) btagcat_DF++;
+
+          auto const bscore_DCSV = jet->getBtagValue(BtagHelpers::kDeepCSV_Loose);
+          auto const btagWPs_DCSV = BtagHelpers::getBtagWPs(BtagHelpers::kDeepCSV_Loose);
+          unsigned short btagcat_DCSV = 0;
+          if (bscore_DCSV>btagWPs_DCSV.front()) btagcat_DCSV++;
+          if (bscore_DCSV>btagWPs_DCSV.at(1)) btagcat_DCSV++;
+          if (bscore_DCSV>btagWPs_DCSV.back()) btagcat_DCSV++;
+
+          unsigned short const btagcat = btagcat_DF + 4*btagcat_DCSV;
 
           auto const& hadronFlavour = jet->extras.hadronFlavour;
           auto const& partonFlavour = jet->extras.partonFlavour;

@@ -41,10 +41,12 @@ namespace AK4JetSelectionHelpers{
 
   constexpr int jetIdBitPos = 1;
 
-  // b tagging
-  constexpr BtagHelpers::BtagWPType btagger_type = BtagHelpers::kDeepFlav_Loose; // Just pass the loose enum to specify tagger type
-
   void setSelectionBits(AK4JetObject& part);
+
+  // Default is BtagHelpers::kDeepFlav_Loose.
+  extern BtagHelpers::BtagWPType btagger_type;
+  void setBTaggerType(BtagHelpers::BtagWPType const& type);
+
 }
 
 

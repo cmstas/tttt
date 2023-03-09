@@ -32,14 +32,20 @@ void BtagHelpers::configureBtagWPs(){
       btagwptype_btagwp_map = std::unordered_map<BtagWPType, float>{
         { kDeepFlav_Loose, 0.0508 },
         { kDeepFlav_Medium, 0.2598 },
-        { kDeepFlav_Tight, 0.6502 }
+        { kDeepFlav_Tight, 0.6502 },
+        { kDeepCSV_Loose, 0.2027 },
+        { kDeepCSV_Medium, 0.6001 },
+        { kDeepCSV_Tight, 0.8819 }
       };
     }
     else{
       btagwptype_btagwp_map = std::unordered_map<BtagWPType, float>{
         { kDeepFlav_Loose, 0.0480 },
         { kDeepFlav_Medium, 0.2489 },
-        { kDeepFlav_Tight, 0.6377 }
+        { kDeepFlav_Tight, 0.6377 },
+        { kDeepCSV_Loose, 0.1918 },
+        { kDeepCSV_Medium, 0.5847 },
+        { kDeepCSV_Tight, 0.8767 }
       };
     }
     break;
@@ -49,7 +55,10 @@ void BtagHelpers::configureBtagWPs(){
     btagwptype_btagwp_map = std::unordered_map<BtagWPType, float>{
       { kDeepFlav_Loose, 0.0532 },
       { kDeepFlav_Medium, 0.3040 },
-      { kDeepFlav_Tight, 0.7476 }
+      { kDeepFlav_Tight, 0.7476 },
+      { kDeepCSV_Loose, 0.1355 },
+      { kDeepCSV_Medium, 0.4506 },
+      { kDeepCSV_Tight, 0.7738 }
     };
     break;
   }
@@ -59,7 +68,10 @@ void BtagHelpers::configureBtagWPs(){
     btagwptype_btagwp_map = std::unordered_map<BtagWPType, float>{
       { kDeepFlav_Loose, 0.0490 },
       { kDeepFlav_Medium, 0.2783 },
-      { kDeepFlav_Tight, 0.7100 }
+      { kDeepFlav_Tight, 0.7100 },
+      { kDeepCSV_Loose, 0.1208 },
+      { kDeepCSV_Medium, 0.4168 },
+      { kDeepCSV_Tight, 0.7665 }
     };
     if (dy==2022) IVYout << "BtagHelpers::configureBtagWPs: WARNING! Using the WPs for year 2018 in place of " << dy << "." << endl;
     break;
@@ -80,21 +92,19 @@ float const& BtagHelpers::getBtagWP(BtagHelpers::BtagWPType type){
 std::vector<float> BtagHelpers::getBtagWPs(BtagHelpers::BtagWPType type){
   std::vector<float> res; res.reserve(3);
   switch (type){
-    /*
-  case kDeepCSV_Loose:
-  case kDeepCSV_Medium:
-  case kDeepCSV_Tight:
-    res.push_back(getBtagWP(kDeepCSV_Loose));
-    res.push_back(getBtagWP(kDeepCSV_Medium));
-    res.push_back(getBtagWP(kDeepCSV_Tight));
-    break;
-    */
   case kDeepFlav_Loose:
   case kDeepFlav_Medium:
   case kDeepFlav_Tight:
     res.push_back(getBtagWP(kDeepFlav_Loose));
     res.push_back(getBtagWP(kDeepFlav_Medium));
     res.push_back(getBtagWP(kDeepFlav_Tight));
+    break;
+  case kDeepCSV_Loose:
+  case kDeepCSV_Medium:
+  case kDeepCSV_Tight:
+    res.push_back(getBtagWP(kDeepCSV_Loose));
+    res.push_back(getBtagWP(kDeepCSV_Medium));
+    res.push_back(getBtagWP(kDeepCSV_Tight));
     break;
   default:
     IVYerr << "BtagHelpers::getBtagWPs: No implementation for the b-tagging WP type " << type << ". Aborting..." << endl;

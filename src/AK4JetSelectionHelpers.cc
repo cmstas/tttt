@@ -7,6 +7,8 @@
 
 
 namespace AK4JetSelectionHelpers{
+  BtagHelpers::BtagWPType btagger_type = BtagHelpers::kDeepFlav_Loose;
+
   bool testKin(AK4JetObject const& part);
   bool testKin_BTag(AK4JetObject const& part);
 
@@ -23,6 +25,7 @@ namespace AK4JetSelectionHelpers{
 using namespace std;
 using namespace IvyStreamHelpers;
 
+void AK4JetSelectionHelpers::setBTaggerType(BtagHelpers::BtagWPType const& type){ AK4JetSelectionHelpers::btagger_type = type; }
 
 bool AK4JetSelectionHelpers::testKin(AK4JetObject const& part){
   return (part.pt()>=ptThr && std::abs(part.eta())<etaThr_common);
@@ -63,22 +66,10 @@ void AK4JetSelectionHelpers::setBTagBits(AK4JetObject& part){
   auto const btagWPs = BtagHelpers::getBtagWPs(btagger_type);
   assert(btagWPs.size()==3);
 
-  // There is no fool-proof way to do this at the moment other than duplicating some lines...
-  switch (btagger_type){
-  case BtagHelpers::kDeepFlav_Loose:
-  case BtagHelpers::kDeepFlav_Medium:
-  case BtagHelpers::kDeepFlav_Tight:
-  {
-    auto const bscore = part.getBtagValue();
-    part.setSelectionBit(kBTagged_Loose, bscore>btagWPs.front());
-    part.setSelectionBit(kBTagged_Medium, bscore>btagWPs.at(1));
-    part.setSelectionBit(kBTagged_Tight, bscore>btagWPs.back());
-    break;
-  }
-  default:
-    IVYerr << "AK4JetSelectionHelpers::setBTagBits: b-tagger type " << btagger_type << " is not implemented. Aborting..." << endl;
-    assert(0);
-  }
+  auto const bscore = part.getBtagValue();
+  part.setSelectionBit(kBTagged_Loose, bscore>btagWPs.front());
+  part.setSelectionBit(kBTagged_Medium, bscore>btagWPs.at(1));
+  part.setSelectionBit(kBTagged_Tight, bscore>btagWPs.back());
 
   bool const pass_BTag_preselection = part.testSelectionBit(kPreselectionTight_BTaggable);
   part.setSelectionBit(kPreselectionTight_BTagged_Loose, pass_BTag_preselection && part.testSelectionBit(kBTagged_Loose));
