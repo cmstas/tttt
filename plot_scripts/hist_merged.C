@@ -48,7 +48,7 @@ void hist_merged(){
 	TH1F* njets_hist_os = new TH1F("nJets_os","nJets_os",20,0,10);	
 
 	misidentification_hist_os->SetStats(0);
-	misidentification_hist_os->SetFillColor(kGreen-9);
+	//misidentification_hist_os->SetFillColor(kGreen-9);
 
 	TH1F* pt_leading_ss = new TH1F("pt_leading_ss","pt_leading_ss",20,0,200);
 	TH1F* eta_leading_ss = new TH1F("eta_leading_ss","eta_leading_ss",20,0,3);
@@ -65,7 +65,7 @@ void hist_merged(){
 	TH1F* njets_hist_ss = new TH1F("nJets_ss","nJets_ss",20,0,10);	
 
 	misidentification_hist_ss->SetStats(0);
-	misidentification_hist_ss->SetFillColor(kGreen-9);
+	//misidentification_hist_ss->SetFillColor(kGreen-9);
 
 	TH1F* pt_correct_matched = new TH1F("SS_pt_correct_matched","SS_pt_correct_matched",50,0,200);
 	TH1F* pt_opposite_matched = new TH1F("SS_pt_opposite_matched","SS_pt_opposite_matched",50,0,200);
@@ -191,13 +191,28 @@ void hist_merged(){
 
 	pt_fake_matched->SetLineColor(kGreen);	
 
-	THStack* stack_pt = new THStack("SS_pt", "SS_pt");
-	stack_pt->Add(pt_correct_matched); stack_pt->Add(pt_opposite_matched);stack_pt->Add(pt_fake_matched);
 	
 	TLegend *legend = new TLegend(0.7, 0.7, 0.9, 0.9);
 	
 	legend->AddEntry(pt_correct_matched,"correctly matched","l");legend->AddEntry(pt_opposite_matched,"opposite matched","l");
 	legend->AddEntry(pt_fake_matched,"fake matched","l");
+	TCanvas* canvas = new TCanvas("pt_SS", "pt_SS", 800, 600);
+	
+	pt_correct_matched->Draw(); pt_opposite_matched->Draw("SAME"); pt_fake_matched->Draw("SAME"); legend->Draw("SAME");
+
+	canvas->Write();
+
+	canvas = new TCanvas("eta_SS", "eta_SS", 800, 600);
+
+	eta_correct_matched->SetLineColor(kRed);eta_opposite_matched->SetLineColor(kBlue);eta_fake_matched->SetLineColor(kGreen);
+	
+	legend = new TLegend(0.7, 0.7, 0.9, 0.9);
+		
+	legend->AddEntry(eta_correct_matched,"correctly matched","l");legend->AddEntry(eta_opposite_matched,"opposite matched","l");
+	legend->AddEntry(eta_fake_matched,"fake matched","l");
+	eta_opposite_matched->Draw(); eta_correct_matched->Draw("SAME"); eta_fake_matched->Draw("SAME"); legend->Draw("SAME");
+	
+	canvas->Write();
 	
 	TH2F* flip_rate_num = (TH2F*)fraction_flips->Clone("flip_rate_num");
 	fraction_flips->Divide(flip_rate_den);
