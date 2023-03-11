@@ -1,3 +1,10 @@
+void normalize_histogram(TH1F* hist, Double_t norm=1.0) {
+    Double_t integral = hist->Integral();
+    if (integral > 0) {
+        hist->Scale(norm / integral);
+    }
+}
+
 void hist_merged(){
 	
 	TFile* file = new TFile("DY_2l_M_50.root","read");
@@ -190,7 +197,8 @@ void hist_merged(){
 	pt_opposite_matched->SetLineColor(kBlue);	
 
 	pt_fake_matched->SetLineColor(kGreen);	
-
+	
+	//normalize_histogram(pt_correct_matched,1.0);normalize_histogram(pt_opposite_matched,1.0);normalize_histogram(pt_fake_matched,1.0);
 	
 	TLegend *legend = new TLegend(0.7, 0.7, 0.9, 0.9);
 	
