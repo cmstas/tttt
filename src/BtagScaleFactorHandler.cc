@@ -73,6 +73,8 @@ bool BtagScaleFactorHandler::setup(){
     BtagWPType type = (BtagWPType) iwp;
     BTagEntry::OperatingPoint opPoint;
     BTagCalibration* calibration=nullptr;
+
+    if (iwp>=3) break; // FIXME: Implement DeepCSV SFs once efficiencies become available fully.
     switch (type){
     case kDeepFlav_Loose:
       opPoint = BTagEntry::OP_LOOSE;
@@ -85,6 +87,18 @@ bool BtagScaleFactorHandler::setup(){
     case kDeepFlav_Tight:
       opPoint = BTagEntry::OP_TIGHT;
       calibration = WP_calib_map[kDeepFlav_Loose];
+      break;
+    case kDeepCSV_Loose:
+      opPoint = BTagEntry::OP_LOOSE;
+      calibration = WP_calib_map[kDeepCSV_Loose];
+      break;
+    case kDeepCSV_Medium:
+      opPoint = BTagEntry::OP_MEDIUM;
+      calibration = WP_calib_map[kDeepCSV_Loose];
+      break;
+    case kDeepCSV_Tight:
+      opPoint = BTagEntry::OP_TIGHT;
+      calibration = WP_calib_map[kDeepCSV_Loose];
       break;
     default:
       IVYerr << "BtagScaleFactorHandler::setup: No operating point implementation for b tag WP " << type << ". Aborting..." << endl;
@@ -128,6 +142,7 @@ bool BtagScaleFactorHandler::setup(){
           TString const& strpujetidcat = strpujetidcats.at(ipujetidwp);
           if (strpujetidcat=="Inclusive" && (syst==ePUJetIdEffDn || syst==ePUJetIdEffUp)) continue;
           for (int iwp=0; iwp<(int) nBtagWPTypes; iwp++){
+            if (iwp>=3) break; // FIXME: Implement DeepCSV SFs once efficiencies become available fully.
             BtagWPType wptype = (BtagWPType) iwp;
             hname = BtagHelpers::getBtagEffHistName(wptype, strflav.Data()); hname = hname + "_PUJetId_" + strpujetidcat + "_" + systname;
             if (verbosity>=MiscUtils::DEBUG) IVYout << "\t- Extracting MC efficiency histogram " << hname << "..." << endl;
@@ -247,6 +262,21 @@ void BtagScaleFactorHandler::getSFAndEff(SystematicsHelpers::SystematicVariation
     calibReaders_Nominal.push_back(WP_calibreader_map_nominal.find(BtagHelpers::kDeepFlav_Tight)->second);
 
     idx_offset_effmc = (unsigned short) kDeepFlav_Loose;
+    break;
+  }
+  case kDeepCSV_Loose:
+  case kDeepCSV_Medium:
+  case kDeepCSV_Tight:
+  {
+    calibReaders.push_back(WP_calibreader_map->find(BtagHelpers::kDeepCSV_Loose)->second);
+    calibReaders.push_back(WP_calibreader_map->find(BtagHelpers::kDeepCSV_Medium)->second);
+    calibReaders.push_back(WP_calibreader_map->find(BtagHelpers::kDeepCSV_Tight)->second);
+
+    calibReaders_Nominal.push_back(WP_calibreader_map_nominal.find(BtagHelpers::kDeepCSV_Loose)->second);
+    calibReaders_Nominal.push_back(WP_calibreader_map_nominal.find(BtagHelpers::kDeepCSV_Medium)->second);
+    calibReaders_Nominal.push_back(WP_calibreader_map_nominal.find(BtagHelpers::kDeepCSV_Tight)->second);
+
+    idx_offset_effmc = (unsigned short) kDeepCSV_Loose;
     break;
   }
   default:
