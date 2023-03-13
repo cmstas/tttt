@@ -108,6 +108,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   // If we are running on Condor, we will inform the batch job later on that some files would need transfer.
   TString coutput_main = TString("output/ExampleLooper/") + strdate.data() + "/" + theDataPeriod;
   if (!isCondorRun) coutput_main = ANALYSISPKGPATH + "/test/" + coutput_main + "/merged_branches";
+	IVYout << coutput_main << endl;
   HostHelpers::ExpandEnvironmentVariables(coutput_main);
   gSystem->mkdir(coutput_main, true);
 
@@ -321,7 +322,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   for (auto const& dset_proc_pair:dset_proc_pairs){
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
     //TString cinput = (input_files=="" ? strinput + "/DY_2l_M_50_1.root" : strinput + "/" + input_files.data());
-  	int n_files = 10; 
+  	int n_files = 20; 
 		vector<TString> files = {};
 		files.reserve(n_files);
 		for (int i=1; i<files.capacity()+1; i++){
@@ -954,7 +955,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
 #undef BRANCH_VECTOR_COMMANDS
       }
-//Record OS dileptons
+//Record dileptons
  {
 
 
@@ -971,7 +972,13 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 				BRANCH_VECTOR_COMMAND(float,match_pdgId_1) \
 				BRANCH_VECTOR_COMMAND(float,pdgId_2) \
 				BRANCH_VECTOR_COMMAND(float,match_pdgId_2) \ 
-				BRANCH_VECTOR_COMMAND(int, nJets)				
+				BRANCH_VECTOR_COMMAND(int, nJets)	\
+				BRANCH_VECTOR_COMMAND(float, gen_pt_leading) \
+				BRANCH_VECTOR_COMMAND(float, gen_eta_leading) \ 
+				BRANCH_VECTOR_COMMAND(float, gen_pt_trailing) \
+				BRANCH_VECTOR_COMMAND(float, gen_eta_trailing) \
+				BRANCH_VECTOR_COMMAND(float, gen_phi_leading) \
+				BRANCH_VECTOR_COMMAND(float, gen_phi_trailing) 
 #define BRANCH_VECTOR_COMMAND(TYPE, NAME) std::vector<TYPE> dileptons_##NAME;
         BRANCH_VECTOR_COMMANDS;
 #undef BRANCH_VECTOR_COMMAND
@@ -996,9 +1003,19 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
           bool is_genmatched_prompt_2 = it_genmatch_2!=lepton_genmatchpart_map.end() && it_genmatch_2->second!=nullptr;
 					
 					float pdgId_1 = part1->pdgId(), match_pdgId_1 = 33, pdgId_2=part2->pdgId(), match_pdgId_2=33;
+
+					float gen_pt_leading = -33, gen_eta_leading = -33, gen_pt_trailing = -33, gen_eta_trailing = -33, gen_phi_leading = -33, gen_phi_trailing = -33;
+
 					if (is_genmatched_prompt_1 && is_genmatched_prompt_2){
 						match_pdgId_1 = it_genmatch_1->second->pdgId();
+						gen_pt_leading = it_genmatch_1->second->pt();
+						gen_eta_leading = it_genmatch_1->second->eta();						
+						gen_phi_leading = it_genmatch_1->second->phi();	
+
 						match_pdgId_2 = it_genmatch_2->second->pdgId();
+						gen_pt_trailing = it_genmatch_2->second->pt();
+						gen_eta_trailing = it_genmatch_2->second->eta();
+						gen_phi_trailing = it_genmatch_2->second->phi();
 						n_matched += 2;
 						
 						int product_1 = pdgId_1*match_pdgId_1, product_2 = pdgId_2*match_pdgId_2;
@@ -1009,6 +1026,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 					
 					else if (is_genmatched_prompt_1){
 						match_pdgId_1 = it_genmatch_1->second->pdgId();
+						gen_pt_leading = it_genmatch_1->second->pt();
+						gen_eta_leading = it_genmatch_1->second->eta();
+						gen_phi_leading = it_genmatch_1->second->phi();						
 						n_matched++;
 						int product_1 = pdgId_1*match_pdgId_1;
 						if (product_1>0) n_matched_correct++;
@@ -1018,6 +1038,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
 					else if (is_genmatched_prompt_2){
 						match_pdgId_2 = it_genmatch_2->second->pdgId();
+						gen_pt_trailing = it_genmatch_2->second->pt();
+						gen_eta_trailing = it_genmatch_2->second->eta();
+						gen_phi_trailing = it_genmatch_2->second->phi();
 						n_matched++;
 
 						int product_2 = pdgId_2*match_pdgId_2;

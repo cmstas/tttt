@@ -74,17 +74,23 @@ void hist_merged(){
 	misidentification_hist_ss->SetStats(0);
 	//misidentification_hist_ss->SetFillColor(kGreen-9);
 
-	TH1F* pt_correct_matched = new TH1F("SS_pt_correct_matched","SS_pt_correct_matched",50,0,200);
-	TH1F* pt_opposite_matched = new TH1F("SS_pt_opposite_matched","SS_pt_opposite_matched",50,0,200);
-	TH1F* pt_fake_matched = new TH1F("SS_pt_fake_matched","SS_pt_fake_matched",50,0,200);
+	TH1F* pt_correct_matched = new TH1F("SS_pt_correct_matched","SS_pt_correct_matched",6,15,300);
+	TH1F* pt_opposite_matched = new TH1F("SS_pt_opposite_matched","SS_pt_opposite_matched",6,15,300);
+	TH1F* pt_fake_matched = new TH1F("SS_pt_fake_matched","SS_pt_fake_matched",6,15,300);
 	
-	TH1F* eta_correct_matched = new TH1F("SS_eta_correct_matched","SS_eta_correct_matched",20,0,3);
-	TH1F* eta_opposite_matched = new TH1F("SS_eta_opposite_matched","SS_eta_opposite_matched",20,0,3);
-	TH1F* eta_fake_matched = new TH1F("SS_eta_fake_matched","SS_eta_fake_matched",20,0,3);
+	TH1F* eta_correct_matched = new TH1F("SS_eta_correct_matched","SS_eta_correct_matched",3,0,2.5);
+	TH1F* eta_opposite_matched = new TH1F("SS_eta_opposite_matched","SS_eta_opposite_matched",3,0,2.5);
+	TH1F* eta_fake_matched = new TH1F("SS_eta_fake_matched","SS_eta_fake_matched",3,0,2.5);
 
 	TH2F* fraction_flips = new TH2F("fraction_flips","fraction_flips",6,15,300,3,0,2.5);
 	TH2F* flip_rate_den = new TH2F("flip_rate_den","flip_rate_den",6,15,300,3,0,2.5);
 //	TH2F* fraction_flips = new TH2F("fraction_flips","fraction_flips",50,0,200,20,0,3);
+
+	TH2F* pt_eta_SS_matched = new TH2F("pt_eta_SS_matched","pt_eta_SS_matched",6,15,300,3,0,2.5);
+ 
+	TH2F* pt_eta_OS_matched = new TH2F("pt_eta_OS_matched","pt_eta_OS_matched",6,15,300,3,0,2.5);
+
+	TH2F* pt_eta_fake_matched = new TH2F("pt_eta_fake_matched","pt_eta_fake_matched",6,15,300,3,0,2.5);
 
 	int entries = tree->GetEntries();
 	int counter = 0;
@@ -139,18 +145,20 @@ void hist_merged(){
 				else {
 
 								if (correctly_matched_part1){
+									pt_eta_SS_matched->Fill((*dileptons_leading_pt)[j],abs((*dileptons_leading_eta)[j]));
 									pt_correct_matched->Fill((*dileptons_leading_pt)[j]);	
 									eta_correct_matched->Fill(abs((*dileptons_leading_eta)[j]));		
 								}
 								
 								else if (opposite_matched_part1){
-									counter++;	
+									pt_eta_OS_matched->Fill((*dileptons_leading_pt)[j],abs((*dileptons_leading_eta)[j]));
 									pt_opposite_matched->Fill((*dileptons_leading_pt)[j]);	
 									eta_opposite_matched->Fill(abs((*dileptons_leading_eta)[j]));		
 							
 								}
 								
 								else{
+									pt_eta_fake_matched->Fill((*dileptons_leading_pt)[j],abs((*dileptons_leading_eta)[j]));
 									pt_fake_matched->Fill((*dileptons_leading_pt)[j]);	
 									eta_fake_matched->Fill(abs((*dileptons_leading_eta)[j]));		
 									
@@ -158,18 +166,24 @@ void hist_merged(){
 
 
 								if (correctly_matched_part2){
+
+									pt_eta_SS_matched->Fill((*dileptons_trailing_pt)[j],abs((*dileptons_trailing_eta)[j]));
+
 									pt_correct_matched->Fill((*dileptons_trailing_pt)[j]);	
 									eta_correct_matched->Fill(abs((*dileptons_trailing_eta)[j]));		
 								}
 								
 								else if (opposite_matched_part2){
-									counter++;	
+									
+									pt_eta_OS_matched->Fill((*dileptons_trailing_pt)[j],abs((*dileptons_trailing_eta)[j]));
 									pt_opposite_matched->Fill((*dileptons_trailing_pt)[j]);	
 									eta_opposite_matched->Fill(abs((*dileptons_trailing_eta)[j]));		
 							
 								}
 								
 								else{
+
+									pt_eta_fake_matched->Fill((*dileptons_trailing_pt)[j],abs((*dileptons_trailing_eta)[j]));
 									pt_fake_matched->Fill((*dileptons_trailing_pt)[j]);	
 									eta_fake_matched->Fill(abs((*dileptons_trailing_eta)[j]));		
 								}	
