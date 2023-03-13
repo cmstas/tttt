@@ -10,6 +10,10 @@ namespace BtagHelpers{
     kDeepFlav_Medium,
     kDeepFlav_Tight,
 
+    kDeepCSV_Loose,
+    kDeepCSV_Medium,
+    kDeepCSV_Tight,
+
     nBtagWPTypes
   };
 
