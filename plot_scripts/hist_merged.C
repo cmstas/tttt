@@ -31,7 +31,12 @@ void hist_merged(){
 	vector<float>* gen_trailing_eta = nullptr;
 	vector<float>* gen_leading_phi = nullptr;
 	vector<float>* gen_trailing_phi = nullptr;
-
+	vector<float>* dileptons_leading_iso = nullptr;
+	vector<float>* dileptons_trailing_iso = nullptr;
+	vector<float>* dileptons_dxy_leading = nullptr;
+	vector<float>* dileptons_dxy_trailing = nullptr;
+	vector<float>* dileptons_dz_leading = nullptr;
+	vector<float>* dileptons_dz_trailing = nullptr;
 	
 	tree->SetBranchAddress("dileptons_lpt",&dileptons_leading_pt);
 	tree->SetBranchAddress("dileptons_tpt",&dileptons_trailing_pt);
@@ -52,7 +57,13 @@ void hist_merged(){
 	tree->SetBranchAddress("dileptons_gen_eta_trailing",&gen_trailing_eta);
 	tree->SetBranchAddress("dileptons_gen_phi_leading",&gen_leading_phi);
 	tree->SetBranchAddress("dileptons_gen_phi_trailing",&gen_trailing_phi);
-	
+	tree->SetBranchAddress("dileptons_leading_iso",&dileptons_leading_iso);
+	tree->SetBranchAddress("dileptons_trailing_iso",&dileptons_trailing_iso);
+	tree->SetBranchAddress("dileptons_dxy_leading",&dileptons_dxy_leading);	
+	tree->SetBranchAddress("dileptons_dxy_trailing",&dileptons_dxy_trailing);	
+	tree->SetBranchAddress("dileptons_dz_leading",&dileptons_dz_leading);	
+	tree->SetBranchAddress("dileptons_dz_trailing",&dileptons_dz_trailing);	
+
 	TH1F* pt_leading_os = new TH1F("pt_leading_os","pt_leading_os",20,0,200);
 	TH1F* eta_leading_os = new TH1F("eta_leading_os","eta_leading_os",20,0,3);
 	TH1F* phi_leading_os = new TH1F("phi_leading_os","phi_leading_os",20,-5,5);
@@ -108,8 +119,20 @@ void hist_merged(){
 	TH1F* eta_gen_OS_matched = new TH1F("eta_gen_OS_matched","eta_gen_OS_matched",3,0,2.5); 
 	TH1F* eta_gen_fake_matched = new TH1F("eta_gen_fake_matched","eta_gen_fake_matched",3,0,2.5); 
 
-	TH1F* dR_SS_matched = new TH1F("dR_SS_matched","dR_SS_matched",20,0,10);
-	TH1F* dR_OS_matched = new TH1F("dR_OS_matched","dR_OS_matched",20,0,10);
+	TH1F* dR_SS_matched = new TH1F("dR_SS_matched","dR_SS_matched",100,0,0.2);
+	TH1F* dR_OS_matched = new TH1F("dR_OS_matched","dR_OS_matched",100,0,0.2);
+
+	TH1F* iso_SS = new TH1F("iso_SS","iso_SS",20,0,0.1);
+	TH1F* iso_OS = new TH1F("iso_OS","iso_OS",20,0,0.1);
+	TH1F* iso_fake = new TH1F("iso_fake","iso_fake",20,0,0.1);
+
+	TH1F* dxy_SS = new TH1F("dxy_SS","dxy_SS",20,0,0.1);
+	TH1F* dxy_OS = new TH1F("dxy_OS","dxy_OS",20,0,0.1);
+	TH1F* dxy_fake = new TH1F("dxy_fake","dxy_fake",20,0,0.1);
+	
+	TH1F* dz_SS = new TH1F("dz_SS","dz_SS",20,0,0.1);
+	TH1F* dz_OS = new TH1F("dz_OS","dz_OS",20,0,0.1);
+	TH1F* dz_fake = new TH1F("dz_fake","dz_fake",20,0,0.1);
 	
 	int entries = tree->GetEntries();
 
@@ -166,7 +189,11 @@ void hist_merged(){
 				else {
 
 								if (correctly_matched_part1){
+
+									dz_SS->Fill((*dileptons_dz_leading)[j]);
 									
+									dxy_SS->Fill((*dileptons_dxy_leading)[j]);
+									iso_SS->Fill((*dileptons_leading_iso)[j]);
 									dR_SS_matched->Fill(dR_leading);	
 									pt_gen_SS_matched->Fill((*gen_leading_pt)[j]); eta_gen_SS_matched->Fill(abs((*gen_leading_eta)[j]));			
 
@@ -177,6 +204,9 @@ void hist_merged(){
 								
 								else if (opposite_matched_part1){
 									
+									dz_OS->Fill((*dileptons_dz_leading)[j]);	
+									iso_OS->Fill((*dileptons_leading_iso)[j]);
+									dxy_OS->Fill((*dileptons_dxy_leading)[j]);
 									dR_OS_matched->Fill(dR_leading);
 									pt_gen_OS_matched->Fill((*gen_leading_pt)[j]); eta_gen_OS_matched->Fill(abs((*gen_leading_eta)[j]));			
 					
@@ -189,7 +219,9 @@ void hist_merged(){
 								else{
 
 								//	pt_gen_fake_matched->Fill((*gen_leading_pt)[j]); eta_gen_fake_matched->Fill(abs((*gen_leading_eta)[j]));
-			
+									dz_fake->Fill((*dileptons_dz_leading)[j]);	
+									dxy_fake->Fill((*dileptons_dxy_leading)[j]);
+									iso_fake->Fill((*dileptons_leading_iso)[j]);
 									pt_eta_fake_matched->Fill((*dileptons_leading_pt)[j],abs((*dileptons_leading_eta)[j]));
 									pt_fake_matched->Fill((*dileptons_leading_pt)[j]);	
 									eta_fake_matched->Fill(abs((*dileptons_leading_eta)[j]));		
@@ -198,7 +230,12 @@ void hist_merged(){
 
 
 								if (correctly_matched_part2){
+
+									
+									dz_SS->Fill((*dileptons_dz_trailing)[j]);
+									dxy_SS->Fill((*dileptons_dxy_trailing)[j]);
 									dR_SS_matched->Fill(dR_trailing);  
+									iso_SS->Fill((*dileptons_trailing_iso)[j]);
 
 									pt_gen_SS_matched->Fill((*gen_trailing_pt)[j]); eta_gen_SS_matched->Fill(abs((*gen_trailing_eta)[j]));
 									pt_eta_SS_matched->Fill((*dileptons_trailing_pt)[j],abs((*dileptons_trailing_eta)[j]));
@@ -209,6 +246,9 @@ void hist_merged(){
 								
 								else if (opposite_matched_part2){
 								
+									dz_OS->Fill((*dileptons_dz_trailing)[j]);
+									dxy_OS->Fill((*dileptons_dxy_trailing)[j]);
+									iso_OS->Fill((*dileptons_trailing_iso)[j]);
 									dR_OS_matched->Fill(dR_trailing);	
 									pt_gen_OS_matched->Fill((*gen_trailing_pt)[j]); eta_gen_OS_matched->Fill(abs((*gen_trailing_eta)[j]));
 
@@ -220,8 +260,11 @@ void hist_merged(){
 								
 								else{
 
+									dz_fake->Fill((*dileptons_dz_trailing)[j]);
+									dxy_fake->Fill((*dileptons_dxy_trailing)[j]);
 								//	pt_gen_fake_matched->Fill((*gen_trailing_pt)[j]); eta_gen_fake_matched->Fill(abs((*gen_trailing_eta)[j]));
 									pt_eta_fake_matched->Fill((*dileptons_trailing_pt)[j],abs((*dileptons_trailing_eta)[j]));
+									iso_fake->Fill((*dileptons_trailing_iso)[j]);
 									pt_fake_matched->Fill((*dileptons_trailing_pt)[j]);	
 									eta_fake_matched->Fill(abs((*dileptons_trailing_eta)[j]));		
 								}	
@@ -326,6 +369,51 @@ void hist_merged(){
 	canvas->Clear();	
 
 	// end of dR plot
+	
+
+	// rel iso plot
+	
+	iso_SS->SetLineColor(kRed); iso_OS->SetLineColor(kBlue); iso_fake->SetLineColor(kGreen);
+
+	legend = new TLegend(0.7,0.7,0.9,0.9);
+
+	canvas = new TCanvas("relative_iso","relative_iso",800,400);
+	legend->AddEntry(iso_SS,"iso_SS","l");legend->AddEntry(iso_OS,"iso_OS","l");legend->AddEntry(iso_fake,"iso_fake","l");
+
+	iso_SS->Draw(); iso_OS->Draw("SAME"); iso_fake->Draw("SAME"); iso_fake->Draw("SAME"); legend->Draw("SAME");
+
+	canvas->Write();
+	// end of iso plot
+
+	// dxy plot
+	
+	dxy_SS->SetLineColor(kRed); dxy_OS->SetLineColor(kBlue); dxy_fake->SetLineColor(kGreen);
+
+	legend = new TLegend(0.7,0.7,0.9,0.9);
+
+	canvas = new TCanvas("dxy_parameter","dxy_parameter",800,400);
+	legend->AddEntry(dxy_SS,"dxy_SS","l");legend->AddEntry(dxy_OS,"dxy_OS","l");legend->AddEntry(dxy_fake,"dxy_fake","l");
+
+	dxy_SS->Draw(); dxy_OS->Draw("SAME"); dxy_fake->Draw("SAME"); dxy_fake->Draw("SAME"); legend->Draw("SAME");
+
+	canvas->Write();
+
+	// end of dxy plot
+
+	// dz plot
+	
+	dz_SS->SetLineColor(kRed); dz_OS->SetLineColor(kBlue); dz_fake->SetLineColor(kGreen);
+
+	legend = new TLegend(0.7,0.7,0.9,0.9);
+
+	canvas = new TCanvas("dz_parameter","dz_parameter",800,400);
+	legend->AddEntry(dz_SS,"dz_SS","l");legend->AddEntry(dz_OS,"dz_OS","l");legend->AddEntry(dz_fake,"dz_fake","l");
+
+	dz_SS->Draw(); dz_OS->Draw("SAME"); dz_fake->Draw("SAME"); dz_fake->Draw("SAME"); legend->Draw("SAME");
+
+	canvas->Write();
+	
+	// end of dz plot
 
 	TH2F* flip_rate_num = (TH2F*)fraction_flips->Clone("flip_rate_num");
 	fraction_flips->Divide(flip_rate_den);
