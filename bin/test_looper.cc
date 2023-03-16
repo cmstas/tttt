@@ -153,15 +153,19 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   IVYerr.open(stroutput_err.Data());
 	output_csv.open(stroutput_csv);
 	
-	output_csv << "event" << ',';
-	output_csv << "tight_electrons" << ',';
-	output_csv << "tight_muons" << ',';
-	output_csv << "has_os_pair" << ',';
-	output_csv << "has_os_zcand" << ',';
-	output_csv << "has_ss_zcand" << ',';
-	output_csv << "n_leptons_matched" << ',';
+	output_csv << "Event" << ',';
+	output_csv << "nTightEle" << ',';
+	output_csv << "nTightMu" << ',';
+	output_csv << "hasOS" << ',';
+	output_csv << "hasOS_ZCand" << ',';
+	output_csv << "hasSS_ZCand" << ',';
+	output_csv << "nGenMatchedLeptons" << ',';
 	output_csv << "matched_correct" << ',';
-	output_csv << "dileptons_vec_size" << endl;
+	output_csv << "nJets" << ',';
+	output_csv << "leading_tightCharge" << ',';
+	output_csv << "trailing_tightCharge" << ',';
+	output_csv << "leading_mother" << ',';
+	output_csv << "trailing_mother" << endl;
 
   // In case the user wants to run on particular files
   std::string input_files;
@@ -318,23 +322,25 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   unsigned int nevents_total_traversed = 0;
   std::vector<BaseTree*> tinlist; tinlist.reserve(dset_proc_pairs.size());
   std::unordered_map<BaseTree*, double> tin_normScale_map;
+	
+	vector<TString> files = {};
 
   for (auto const& dset_proc_pair:dset_proc_pairs){
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
-    //TString cinput = (input_files=="" ? strinput + "/DY_2l_M_50_1.root" : strinput + "/" + input_files.data());
+    TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
   	int n_files = 20; 
-		vector<TString> files = {};
+		//vector<TString> files = {};
 		files.reserve(n_files);
 		for (int i=1; i<files.capacity()+1; i++){
 			TString file = (input_files=="" ? strinput + "/DY_2l_M_50_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
 			files.push_back(file);
 		} 
-		vector<TString> cinput = files;
+		//vector<TString> cinput = files;
 		IVYout << "Accessing input files " << cinput << "..." << endl;
     TString const sid = SampleHelpers::getSampleIdentifier(dset_proc_pair.first);
     bool const isData = SampleHelpers::checkSampleIsData(sid);
-    //BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
-    BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
+    BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
+  //  BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
 		if (!tin->isValid()){
       IVYout << "An error occured while acquiring the input from " << cinput << ". Aborting..." << endl;
       assert(0);
@@ -427,12 +433,17 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   int eventIndex_end = -1;
   int eventIndex_tracker = 0;
   splitInputEventsIntoChunks((is_sim_data_flag==1), nevents_total, ichunk, nchunks, eventIndex_begin, eventIndex_end);
+	
+	int current_file = 0;
+
   for (auto const& tin:tinlist){
     if (SampleHelpers::doSignalInterrupt==1) break;
 
     auto const& norm_scale = tin_normScale_map.find(tin)->second;
     bool const isData = (is_sim_data_flag==1);
-
+		
+		//IVYout << "current file is " << files[current_file] << endl;
+		current_file++;
     // Wrap the ivies around the input tree:
     // Booking is basically SetBranchStatus+SetBranchAddress. You can book for as many trees as you would like.
     // In some cases, bookBranches also informs the ivy dynamically that it is supposed to consume certain entries.
@@ -909,8 +920,6 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         rcd_output.setNamedVal("LuminosityBlock", *ptr_LuminosityBlock);
       }
 		
-			int n_matched = 0;	
-			int n_matched_correct = 0;
       rcd_output.setNamedVal<float>("HT_ak4jets", HT_ak4jets);
      // rcd_output.setNamedVal<float>("pTmiss", pTmiss);
       //rcd_output.setNamedVal<float>("phimiss", phimiss);
@@ -955,6 +964,17 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
 #undef BRANCH_VECTOR_COMMANDS
       }
+
+
+	int n_matched = 0;	
+	int n_matched_correct = 0;
+	float csv_leading_tightcharge = 0;
+	float csv_trailing_tightcharge = 0;
+	float csv_leading_mom = 0;
+	float csv_trailing_mom = 0;	
+	int csv_nJets = 0;	
+
+
 //Record dileptons
  {
 
@@ -978,7 +998,17 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 				BRANCH_VECTOR_COMMAND(float, gen_pt_trailing) \
 				BRANCH_VECTOR_COMMAND(float, gen_eta_trailing) \
 				BRANCH_VECTOR_COMMAND(float, gen_phi_leading) \
-				BRANCH_VECTOR_COMMAND(float, gen_phi_trailing) 
+				BRANCH_VECTOR_COMMAND(float, gen_phi_trailing) \
+				BRANCH_VECTOR_COMMAND(float, dxy_leading) \
+				BRANCH_VECTOR_COMMAND(float, dxy_trailing) \
+				BRANCH_VECTOR_COMMAND(float, dz_leading) \
+				BRANCH_VECTOR_COMMAND(float, dz_trailing) \
+				BRANCH_VECTOR_COMMAND(float, leading_iso) \
+				BRANCH_VECTOR_COMMAND(float, trailing_iso)\
+				BRANCH_VECTOR_COMMAND(float, gen_leading_mother)\
+				BRANCH_VECTOR_COMMAND(float, gen_trailing_mother)\
+				BRANCH_VECTOR_COMMAND(float, leading_tightcharge) \
+				BRANCH_VECTOR_COMMAND(float, trailing_tightcharge) 
 #define BRANCH_VECTOR_COMMAND(TYPE, NAME) std::vector<TYPE> dileptons_##NAME;
         BRANCH_VECTOR_COMMANDS;
 #undef BRANCH_VECTOR_COMMAND
@@ -1006,16 +1036,33 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
 					float gen_pt_leading = -33, gen_eta_leading = -33, gen_pt_trailing = -33, gen_eta_trailing = -33, gen_phi_leading = -33, gen_phi_trailing = -33;
 
+					float dxy_leading = ((ElectronObject*)part1)->extras.dxy, dxy_trailing = ((ElectronObject*)part2)->extras.dxy;
+					float dz_leading = ((ElectronObject*)part1)->extras.dz, dz_trailing = ((ElectronObject*)part2)->extras.dz;
+
+					float leading_iso = ((ElectronObject*)part1)->extras.pfRelIso03_all, trailing_iso = ((ElectronObject*)part2)->extras.pfRelIso03_all;	
+
+			
+					float leading_tightcharge = ((ElectronObject*)part1)->extras.tightCharge, trailing_tightcharge = ((ElectronObject*)part2)->extras.tightCharge;
+					csv_leading_tightcharge = leading_tightcharge; csv_trailing_tightcharge = trailing_tightcharge; 
+					float gen_leading_mother = 0, gen_trailing_mother = 0; 
+ 
+
 					if (is_genmatched_prompt_1 && is_genmatched_prompt_2){
 						match_pdgId_1 = it_genmatch_1->second->pdgId();
 						gen_pt_leading = it_genmatch_1->second->pt();
 						gen_eta_leading = it_genmatch_1->second->eta();						
-						gen_phi_leading = it_genmatch_1->second->phi();	
-
+						gen_phi_leading = it_genmatch_1->second->phi();						
+	
 						match_pdgId_2 = it_genmatch_2->second->pdgId();
 						gen_pt_trailing = it_genmatch_2->second->pt();
 						gen_eta_trailing = it_genmatch_2->second->eta();
 						gen_phi_trailing = it_genmatch_2->second->phi();
+						
+						if (it_genmatch_1->second->getNMothers() > 0) gen_leading_mother = it_genmatch_1->second->getMother(0)->pdgId();	
+						if (it_genmatch_2->second->getNMothers() > 0) gen_trailing_mother = it_genmatch_2->second->getMother(0)->pdgId();	
+						
+						csv_leading_mom = gen_leading_mother; csv_trailing_mom = gen_trailing_mother;
+						
 						n_matched += 2;
 						
 						int product_1 = pdgId_1*match_pdgId_1, product_2 = pdgId_2*match_pdgId_2;
@@ -1028,7 +1075,12 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 						match_pdgId_1 = it_genmatch_1->second->pdgId();
 						gen_pt_leading = it_genmatch_1->second->pt();
 						gen_eta_leading = it_genmatch_1->second->eta();
-						gen_phi_leading = it_genmatch_1->second->phi();						
+						gen_phi_leading = it_genmatch_1->second->phi();
+
+						
+						if (it_genmatch_1->second->getNMothers() > 0) gen_leading_mother = it_genmatch_1->second->getMother(0)->pdgId();	
+						csv_leading_mom = gen_leading_mother;
+	
 						n_matched++;
 						int product_1 = pdgId_1*match_pdgId_1;
 						if (product_1>0) n_matched_correct++;
@@ -1041,6 +1093,11 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 						gen_pt_trailing = it_genmatch_2->second->pt();
 						gen_eta_trailing = it_genmatch_2->second->eta();
 						gen_phi_trailing = it_genmatch_2->second->phi();
+					
+					
+						if (it_genmatch_2->second->getNMothers() > 0) gen_trailing_mother = it_genmatch_2->second->getMother(0)->pdgId();	
+						csv_trailing_mom = gen_trailing_mother;
+
 						n_matched++;
 
 						int product_2 = pdgId_2*match_pdgId_2;
@@ -1048,6 +1105,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 					}
 					
 					int nJets = numJets;
+					csv_nJets = nJets;
 
 
 #define BRANCH_VECTOR_COMMAND(TYPE, NAME) dileptons_##NAME.push_back(NAME);
@@ -1056,7 +1114,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
 }
 						
-        
+   
 }
 
 #define BRANCH_VECTOR_COMMAND(TYPE, NAME) rcd_output.setNamedVal(Form("dileptons_%s", #NAME), dileptons_##NAME);
@@ -1133,8 +1191,12 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 			output_csv << has_dilepton_SS_ZCand_tight << ',';
 			output_csv << n_matched << ',';
 			output_csv << n_matched_correct << ',';
-			output_csv << filtered_zcand.size() << endl;
-			 
+			output_csv << csv_nJets << ',';
+			output_csv << csv_leading_tightcharge << ',';
+			output_csv << csv_trailing_tightcharge << ',';
+			output_csv << csv_leading_mom << ',';
+			output_csv << csv_trailing_mom << endl; 
+
       if (firstOutputEvent) firstOutputEvent = false;
     }
     IVYout << "Number of events recorded: " << n_recorded << " / " << n_traversed << " / " << nEntries << endl;
