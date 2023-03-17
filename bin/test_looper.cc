@@ -327,20 +327,20 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
   for (auto const& dset_proc_pair:dset_proc_pairs){
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
-    TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
+    //TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
   	int n_files = 20; 
-		//vector<TString> files = {};
+		vector<TString> files = {};
 		files.reserve(n_files);
 		for (int i=1; i<files.capacity()+1; i++){
 			TString file = (input_files=="" ? strinput + "/DY_2l_M_50_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
 			files.push_back(file);
 		} 
-		//vector<TString> cinput = files;
+		vector<TString> cinput = files;
 		IVYout << "Accessing input files " << cinput << "..." << endl;
     TString const sid = SampleHelpers::getSampleIdentifier(dset_proc_pair.first);
     bool const isData = SampleHelpers::checkSampleIsData(sid);
-    BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
-  //  BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
+  //  BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
+    BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
 		if (!tin->isValid()){
       IVYout << "An error occured while acquiring the input from " << cinput << ". Aborting..." << endl;
       assert(0);
