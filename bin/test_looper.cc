@@ -821,7 +821,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 						dilepton_OS_ZCand_tight = dilepton;
 						filtered_zcand.push_back(dilepton_OS_ZCand_tight);
 																																
-}
+					}
           else{
             fail_vetos = true;
             break; // No need to look further, selection failed
@@ -831,14 +831,14 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         if (isSS && isTight && is_ZClose && !dilepton_SS_ZCand_tight) {dilepton_SS_ZCand_tight = dilepton;
 					
 					filtered_zcand.push_back(dilepton_SS_ZCand_tight);
-}
+				}
 				if ((dilepton_SS_ZCand_tight == nullptr) && (dilepton_OS_ZCand_tight == nullptr)) {
 					fail_vetos = true;
 					break;
 				
 				}	
 
-} 
+		} 
       if (fail_vetos) continue;
       seltracker.accumulate("Pass dilepton vetos", wgt);
 
