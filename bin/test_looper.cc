@@ -145,13 +145,13 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   TString stroutput_log = coutput_main + "/log_" + output_file.data() + ".out"; // This is the output log file.
   TString stroutput_err = coutput_main + "/log_" + output_file.data() + ".err"; // This is the error log file.
   
-  TString stroutput_csv = coutput_main + "/" + output_file.data() + ".csv"; // This is the output csv file.
+/*  TString stroutput_csv = coutput_main + "/" + output_file.data() + ".csv"; // This is the output csv file.
 	
-	ofstream output_csv;
+	ofstream output_csv;*/
 	
 	IVYout.open(stroutput_log.Data());
   IVYerr.open(stroutput_err.Data());
-	output_csv.open(stroutput_csv);
+	/*output_csv.open(stroutput_csv);
 	
 	output_csv << "Event" << ',';
 	output_csv << "nTightEle" << ',';
@@ -165,7 +165,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 	output_csv << "leading_tightCharge" << ',';
 	output_csv << "trailing_tightCharge" << ',';
 	output_csv << "leading_mother" << ',';
-	output_csv << "trailing_mother" << endl;
+	output_csv << "trailing_mother" << endl;*/
 
   // In case the user wants to run on particular files
   std::string input_files;
@@ -327,7 +327,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
   for (auto const& dset_proc_pair:dset_proc_pairs){
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
-    //TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
+    TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
   	int n_files = 20; 
 		vector<TString> files = {};
 		files.reserve(n_files);
@@ -335,12 +335,12 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 			TString file = (input_files=="" ? strinput + "/DY_2l_M_50_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
 			files.push_back(file);
 		} 
-		vector<TString> cinput = files;
+		//vector<TString> cinput = files;
 		IVYout << "Accessing input files " << cinput << "..." << endl;
     TString const sid = SampleHelpers::getSampleIdentifier(dset_proc_pair.first);
     bool const isData = SampleHelpers::checkSampleIsData(sid);
-  //  BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
-    BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
+    BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
+   // BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
 		if (!tin->isValid()){
       IVYout << "An error occured while acquiring the input from " << cinput << ". Aborting..." << endl;
       assert(0);
@@ -966,13 +966,13 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       }
 
 
-	int n_matched = 0;	
+/*	int n_matched = 0;	
 	int n_matched_correct = 0;
 	float csv_leading_tightcharge = 0;
 	float csv_trailing_tightcharge = 0;
 	float csv_leading_mom = 0;
 	float csv_trailing_mom = 0;	
-	int csv_nJets = 0;	
+	int csv_nJets = 0;*/	
 
 
 //Record dileptons
@@ -1043,7 +1043,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
 			
 					float leading_tightcharge = ((ElectronObject*)part1)->extras.tightCharge, trailing_tightcharge = ((ElectronObject*)part2)->extras.tightCharge;
-					csv_leading_tightcharge = leading_tightcharge; csv_trailing_tightcharge = trailing_tightcharge; 
+					//csv_leading_tightcharge = leading_tightcharge; csv_trailing_tightcharge = trailing_tightcharge; 
 					float gen_leading_mother = 0, gen_trailing_mother = 0; 
  
 
@@ -1061,13 +1061,13 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 						if (it_genmatch_1->second->getNMothers() > 0) gen_leading_mother = it_genmatch_1->second->getMother(0)->pdgId();	
 						if (it_genmatch_2->second->getNMothers() > 0) gen_trailing_mother = it_genmatch_2->second->getMother(0)->pdgId();	
 						
-						csv_leading_mom = gen_leading_mother; csv_trailing_mom = gen_trailing_mother;
+					/*	csv_leading_mom = gen_leading_mother; csv_trailing_mom = gen_trailing_mother;
 						
 						n_matched += 2;
 						
 						int product_1 = pdgId_1*match_pdgId_1, product_2 = pdgId_2*match_pdgId_2;
 						if (product_1>0) {n_matched_correct++;}
-						if (product_2>0) {n_matched_correct++;}
+						if (product_2>0) {n_matched_correct++;}*/
 						
 					}
 					
@@ -1079,11 +1079,11 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
 						
 						if (it_genmatch_1->second->getNMothers() > 0) gen_leading_mother = it_genmatch_1->second->getMother(0)->pdgId();	
-						csv_leading_mom = gen_leading_mother;
+						/*csv_leading_mom = gen_leading_mother;
 	
 						n_matched++;
 						int product_1 = pdgId_1*match_pdgId_1;
-						if (product_1>0) n_matched_correct++;
+						if (product_1>0) n_matched_correct++;*/
 							
 					
 					}
@@ -1096,16 +1096,16 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 					
 					
 						if (it_genmatch_2->second->getNMothers() > 0) gen_trailing_mother = it_genmatch_2->second->getMother(0)->pdgId();	
-						csv_trailing_mom = gen_trailing_mother;
+					/*	csv_trailing_mom = gen_trailing_mother;
 
 						n_matched++;
 
 						int product_2 = pdgId_2*match_pdgId_2;
-						if (product_2>0) n_matched_correct++;
+						if (product_2>0) n_matched_correct++;*/
 					}
 					
 					int nJets = numJets;
-					csv_nJets = nJets;
+					//csv_nJets = nJets;
 
 
 #define BRANCH_VECTOR_COMMAND(TYPE, NAME) dileptons_##NAME.push_back(NAME);
@@ -1183,7 +1183,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       tout->fill();
       n_recorded++;
 
-			output_csv <<  *ptr_EventNumber << ','; 
+		/*	output_csv <<  *ptr_EventNumber << ','; 
 			output_csv << electrons_tight.size() << ',';
 			output_csv << muons_tight.size() << ',';
 			output_csv << OS << ',';
@@ -1195,7 +1195,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 			output_csv << csv_leading_tightcharge << ',';
 			output_csv << csv_trailing_tightcharge << ',';
 			output_csv << csv_leading_mom << ',';
-			output_csv << csv_trailing_mom << endl; 
+			output_csv << csv_trailing_mom << endl;*/ 
 
       if (firstOutputEvent) firstOutputEvent = false;
     }
@@ -1215,11 +1215,11 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   // Does nothing if you are running the program locally because your output is already in the desired location.
   SampleHelpers::splitFileAndAddForTransfer(stroutput);
 
-  SampleHelpers::splitFileAndAddForTransfer(stroutput_csv);
+  //SampleHelpers::splitFileAndAddForTransfer(stroutput_csv);
   // Close the output and error log files
   IVYout.close();
   IVYerr.close();
-	output_csv.close();	
+	//output_csv.close();	
   return 0;
 }
 
