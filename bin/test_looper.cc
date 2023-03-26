@@ -106,8 +106,10 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   // This is the output directory.
   // Output should always be recorded as if you are running the job locally.
   // If we are running on Condor, we will inform the batch job later on that some files would need transfer.
-  TString coutput_main = TString("output/ExampleLooper/") + strdate.data() + "/" + theDataPeriod;
-  if (!isCondorRun) coutput_main = ANALYSISPKGPATH + "/test/" + coutput_main + "/merged_branches";
+  //TString coutput_main = TString("output/ExampleLooper/") + strdate.data() + "/" + theDataPeriod;
+ 
+  TString coutput_main = TString("output/") + strdate.data() + "/" + theDataPeriod;
+  if (!isCondorRun) coutput_main = ANALYSISPKGPATH  + coutput_main;
 	IVYout << coutput_main << endl;
   HostHelpers::ExpandEnvironmentVariables(coutput_main);
   gSystem->mkdir(coutput_main, true);
@@ -327,20 +329,20 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
   for (auto const& dset_proc_pair:dset_proc_pairs){
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
-    TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
-  	int n_files = 20; 
+    //TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
+  	int n_files = 1; 
 		vector<TString> files = {};
 		files.reserve(n_files);
 		for (int i=1; i<files.capacity()+1; i++){
 			TString file = (input_files=="" ? strinput + "/DY_2l_M_50_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
 			files.push_back(file);
 		} 
-		//vector<TString> cinput = files;
+		vector<TString> cinput = files;
 		IVYout << "Accessing input files " << cinput << "..." << endl;
     TString const sid = SampleHelpers::getSampleIdentifier(dset_proc_pair.first);
     bool const isData = SampleHelpers::checkSampleIsData(sid);
-    BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
-   // BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
+    //BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
+    BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
 		if (!tin->isValid()){
       IVYout << "An error occured while acquiring the input from " << cinput << ". Aborting..." << endl;
       assert(0);
@@ -757,35 +759,55 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
 
 }*/
+			
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 gets to the preselection area" << endl;  
+
+			}
+		
 
       bool const pass_Nleptons = (nleptons_tight==2);
       if (!pass_Nleptons) continue;
       seltracker.accumulate("Has 2 leptons", wgt);
 
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 passes the 2 leptons cut" << endl;  
+			}
+
 			bool const pass_electronpair = (abs(leptons_tight.front()->pdgId())==11 && abs(leptons_tight.back()->pdgId())==11);
 			if (!pass_electronpair) continue;
-//      seltracker.accumulate("Pass pTmiss", wgt);
-			bool OS = (leptons_tight.front()->pdgId() / leptons_tight.back()->pdgId()) == -1;
+
 			
-      bool const pass_HTjets = HT_ak4jets>=minHT_jets;
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 passes the electron pair cut" << endl;  
+			}
+
+//      seltracker.accumulate("Pass pTmiss", wgt);
+//			bool OS = (leptons_tight.front()->pdgId() / leptons_tight.back()->pdgId()) == -1;
+			
+     /* bool const pass_HTjets = HT_ak4jets>=minHT_jets;
       if (!pass_HTjets) continue;
-      seltracker.accumulate("Pass HT", wgt);
+      seltracker.accumulate("Pass HT", wgt);*/
 
       bool const pass_pTl1 = leptons_tight.front()->pt()>=25.;
       bool const pass_pTl2 = leptons_tight.at(1)->pt()>=20.;
       if (!(pass_pTl1 && pass_pTl2)) continue;
       seltracker.accumulate("Pass pTl1 and pTl2", wgt);
 
-      bool const pass_pTl3 = (nleptons_tight<3 || leptons_tight.at(2)->pt()>=minpt_l3);
-      if (!pass_pTl3) continue;
-      seltracker.accumulate("Pass pTl3 if >=3 tight leptons", wgt);
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 passes the ptL1 and ptl2 cut" << endl;  
+			}
 
-      int nQ = 0;
+     /* bool const pass_pTl3 = (nleptons_tight<3 || leptons_tight.at(2)->pt()>=minpt_l3);
+      if (!pass_pTl3) continue;
+      seltracker.accumulate("Pass pTl3 if >=3 tight leptons", wgt);*/
+
+      /*int nQ = 0;
       for (auto const& part:leptons_tight) nQ += (part->pdgId()>0 ? -1 : 1);
       bool const pass_trileptonSameCharge = (std::abs(nQ)<(6-static_cast<int>(nleptons_tight)));
 			bool has_3_ss = !pass_trileptonSameCharge;
       if (!pass_trileptonSameCharge) continue;
-      seltracker.accumulate("Pass 3-lepton same charge veto", wgt);
+      seltracker.accumulate("Pass 3-lepton same charge veto", wgt);*/
 
       // Construct all possible dilepton pairs
       // Note that loose leptons are included as well in the 'selected' collection
@@ -809,6 +831,20 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         bool is_ZClose = std::abs(dilepton->m()-91.2)<15.;
         bool is_DYClose = is_ZClose || is_LowMass;
 				
+				if (*ptr_EventNumber == 259700){
+					
+					IVYout << "isSS " << isSS << endl;
+					IVYout << "isOS " << isOS << endl;
+					IVYout << "isTight " << isTight << endl;
+					IVYout << "isSF " << isSF << endl;
+					IVYout << "is_LowMass " << is_LowMass << endl;
+					IVYout << "is_ZClose " << is_ZClose << endl;
+					IVYout << "is_DYClose " << is_DYClose << endl;
+					IVYout << "mass " << dilepton->m() << endl;
+				}					
+
+
+
         if (isSS && isSF && is_LowMass && std::abs(dilepton->getDaughter(0)->pdgId())==11){
           fail_vetos = true;
           break; // No need to look further, selection failed
@@ -820,7 +856,12 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
           if (isTight && is_ZClose && !dilepton_OS_ZCand_tight){
 						dilepton_OS_ZCand_tight = dilepton;
 						filtered_zcand.push_back(dilepton_OS_ZCand_tight);
-																																
+								
+					if (*ptr_EventNumber == 259700){
+						IVYout << "Event number 259700 is OS zcand" << endl;  
+						}
+
+																														
 					}
           else{
             fail_vetos = true;
@@ -831,9 +872,23 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         if (isSS && isTight && is_ZClose && !dilepton_SS_ZCand_tight) {dilepton_SS_ZCand_tight = dilepton;
 					
 					filtered_zcand.push_back(dilepton_SS_ZCand_tight);
+
+				
+					if (*ptr_EventNumber == 259700){
+						IVYout << "Event number 259700 is SS zcand" << endl;  
+					}
+
+
 				}
 				if ((dilepton_SS_ZCand_tight == nullptr) && (dilepton_OS_ZCand_tight == nullptr)) {
 					fail_vetos = true;
+
+						
+					if (*ptr_EventNumber == 259700){
+						IVYout << "Event number 259700 has fail vetosed" << endl;  
+						}
+
+
 					break;
 				
 				}	
@@ -867,26 +922,54 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       // - HEM veto should be apply on jets since events where there is a jet in this region are known to have a biased (PF?)MET.
       // - If electron selection is loose, the HEM failure can also cause a hot spot in the relevant eta-phi region for electrons.
       // However, a veto on electrons needs to be checked carefully as it depends on the specifics of the ID.
+      
+			
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 is before the HEM veto area" << endl;  
+			}
+
+
       constexpr bool pass_HEMveto = true;
       //bool const pass_HEMveto = eventFilter.test2018HEMFilter(&simEventHandler, nullptr, nullptr, &ak4jets);
       //bool const pass_HEMveto = eventFilter.test2018HEMFilter(&simEventHandler, &electrons, nullptr, &ak4jets);
       if (!pass_HEMveto) continue;
       seltracker.accumulate("Pass HEM veto", wgt);
 
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 has made through HEM cut" << endl;  
+			}
+
+
       // MET filters are regular filters from JetMET.
       bool const pass_METFilters = eventFilter.passMETFilters();
       if (!pass_METFilters) continue;
       seltracker.accumulate("Pass MET filters", wgt);
 
+
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 has made through MET filter" << endl;  
+			}
+
+
       // Test if the data event is unique (i.e., dorky). Does not do anything in the MC.
       if (!eventFilter.isUniqueDataEvent()) continue;
       seltracker.accumulate("Pass unique event check", wgt);
+
+
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 has passed through unique event" << endl;  
+			}
+
 
       // Triggers without HLT object matching
       float event_wgt_triggers_dilepton = eventFilter.getTriggerWeight(hltnames_Dilepton);
       bool const pass_triggers_dilepton = (event_wgt_triggers_dilepton!=0.f);
       if (!pass_triggers_dilepton) continue; // Test if any triggers passed at all
       seltracker.accumulate("Pass any trigger", wgt);
+
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 has passed any trigger" << endl;  
+			}
 
       // Trigger with HLT object matching
       float event_wgt_triggers_dilepton_matched = eventFilter.getTriggerWeight(
@@ -974,6 +1057,10 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 	float csv_trailing_mom = 0;	
 	int csv_nJets = 0;*/	
 
+
+if (*ptr_EventNumber == 259700){
+	IVYout << "Event number 259700 is before the branch writing section" << endl;  
+	}
 
 //Record dileptons
  {
@@ -1182,6 +1269,10 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
       tout->fill();
       n_recorded++;
+
+			if (*ptr_EventNumber == 259700){
+				IVYout << "Event number 259700 is at the end" << endl;  
+				}
 
 		/*	output_csv <<  *ptr_EventNumber << ','; 
 			output_csv << electrons_tight.size() << ',';

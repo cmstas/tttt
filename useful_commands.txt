@@ -1,6 +1,7 @@
 
-nice -n 10 test_looper dataset=/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v1_L1v1-v2/NANOAODSIM short_name=DY_2l_M_50 period=2018 xsec=6225.4 BR=1 input_tag=230105 output_tag=DYJetsToLL_M-05
+nice -n 10 test_looper dataset=/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v1_L1v1-v2/NANOAODSIM short_name=DY_2l_M_50 period=2018 xsec=6225.4 BR=1 input_tag=230209 output_tag=test_1file
 
-nice -n 10 configureFTAnalysisJobs.py --exe test_looper --nevts 500000 --nthreads=4 --tag 230209_DY_2l_M_50 output_tag=230209_DY_2l_M_50 input_tag=230209 short_name=DY_2l_M_50 period=2018 test/samples_MC_Run2.csv
+configureFTAnalysisJobs.py --exe test_looper --nevts 500000 --nthreads=4 --tag 230209_DY_2l_M_50 output_tag=230209_DY_2l_M_50 input_tag=230209 short_name=DY_2l_M_50 period=2018 test/samples_MC_Run2.csv
 
 watchFTAnalysisJobs.sh test/output/tasks/230209_DY_2l_M_50
+
