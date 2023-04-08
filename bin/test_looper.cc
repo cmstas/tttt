@@ -760,27 +760,27 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
 }*/
 			
-			if (*ptr_EventNumber == 259700){
+			/*if (*ptr_EventNumber == 259700){
 				IVYout << "Event number 259700 gets to the preselection area" << endl;  
 
-			}
+			}*/
 		
 
       bool const pass_Nleptons = (nleptons_tight==2);
       if (!pass_Nleptons) continue;
       seltracker.accumulate("Has 2 leptons", wgt);
 
-			if (*ptr_EventNumber == 259700){
+			/*if (*ptr_EventNumber == 259700){
 				IVYout << "Event number 259700 passes the 2 leptons cut" << endl;  
-			}
+			}*/
 
 			bool const pass_electronpair = (abs(leptons_tight.front()->pdgId())==11 && abs(leptons_tight.back()->pdgId())==11);
 			if (!pass_electronpair) continue;
-
+			seltracker.accumulate("Has electron pair", wgt);
 			
-			if (*ptr_EventNumber == 259700){
+			/*if (*ptr_EventNumber == 259700){
 				IVYout << "Event number 259700 passes the electron pair cut" << endl;  
-			}
+			}*/
 
 //      seltracker.accumulate("Pass pTmiss", wgt);
 //			bool OS = (leptons_tight.front()->pdgId() / leptons_tight.back()->pdgId()) == -1;
@@ -794,9 +794,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       if (!(pass_pTl1 && pass_pTl2)) continue;
       seltracker.accumulate("Pass pTl1 and pTl2", wgt);
 
-			if (*ptr_EventNumber == 259700){
+			/*if (*ptr_EventNumber == 259700){
 				IVYout << "Event number 259700 passes the ptL1 and ptl2 cut" << endl;  
-			}
+			}*/
 
      /* bool const pass_pTl3 = (nleptons_tight<3 || leptons_tight.at(2)->pt()>=minpt_l3);
       if (!pass_pTl3) continue;
@@ -857,9 +857,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 						dilepton_OS_ZCand_tight = dilepton;
 						filtered_zcand.push_back(dilepton_OS_ZCand_tight);
 								
-					if (*ptr_EventNumber == 259700){
+				/*	if (*ptr_EventNumber == 259700){
 						IVYout << "Event number 259700 is OS zcand" << endl;  
-						}
+						}*/
 
 																														
 					}
@@ -874,9 +874,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 					filtered_zcand.push_back(dilepton_SS_ZCand_tight);
 
 				
-					if (*ptr_EventNumber == 259700){
+				/*	if (*ptr_EventNumber == 259700){
 						IVYout << "Event number 259700 is SS zcand" << endl;  
-					}
+					}*/
 
 
 				}
@@ -884,9 +884,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 					fail_vetos = true;
 
 						
-					if (*ptr_EventNumber == 259700){
+					/*if (*ptr_EventNumber == 259700){
 						IVYout << "Event number 259700 has fail vetosed" << endl;  
-						}
+						}*/
 
 
 					break;
@@ -899,19 +899,19 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
       bool const has_dilepton_SS_tight = (dilepton_SS_tight!=nullptr);
 			//if (!has_dilepton_SS_tight) continue;
-      seltracker.accumulate("Has at least one tight SS dilepton", wgt);
+     // seltracker.accumulate("Has at least one tight SS dilepton", wgt);
 
       // Do not skip the event if there is an OS Z cand.
       // Instead, record a mass variable (=-1 if it doesn't exist).
       bool const has_dilepton_OS_ZCand_tight = (dilepton_OS_ZCand_tight!=nullptr);
       rcd_output.setNamedVal<float>("mass_OS_ZCand_tight", (has_dilepton_OS_ZCand_tight ? dilepton_OS_ZCand_tight->mass() : -1.f));
-      seltracker.accumulate("Has no OS Z candidate", wgt*static_cast<double>(!has_dilepton_OS_ZCand_tight));
+      //seltracker.accumulate("Has no OS Z candidate", wgt*static_cast<double>(!has_dilepton_OS_ZCand_tight));
 
       // Do not skip the event if there is an SS Z cand.
       // Instead, record a mass variable (=-1 if it doesn't exist).
       bool const has_dilepton_SS_ZCand_tight = (dilepton_SS_ZCand_tight!=nullptr);
       rcd_output.setNamedVal<float>("mass_SS_ZCand_tight", (has_dilepton_SS_ZCand_tight ? dilepton_SS_ZCand_tight->mass() : -1.f));
-      seltracker.accumulate("Has no SS Z candidate", wgt*static_cast<double>(!has_dilepton_SS_ZCand_tight));
+      //seltracker.accumulate("Has no SS Z candidate", wgt*static_cast<double>(!has_dilepton_SS_ZCand_tight));
 
       // Put event filters to the last because data has unique event tracking enabled.
       // Data event does not get the chance to be tracked until constructFilters is called.
@@ -924,9 +924,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       // However, a veto on electrons needs to be checked carefully as it depends on the specifics of the ID.
       
 			
-			if (*ptr_EventNumber == 259700){
+			/*if (*ptr_EventNumber == 259700){
 				IVYout << "Event number 259700 is before the HEM veto area" << endl;  
-			}
+			}*/
 
 
       constexpr bool pass_HEMveto = true;
@@ -935,9 +935,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       if (!pass_HEMveto) continue;
       seltracker.accumulate("Pass HEM veto", wgt);
 
-			if (*ptr_EventNumber == 259700){
+			/*if (*ptr_EventNumber == 259700){
 				IVYout << "Event number 259700 has made through HEM cut" << endl;  
-			}
+			}*/
 
 
       // MET filters are regular filters from JetMET.
@@ -946,9 +946,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       seltracker.accumulate("Pass MET filters", wgt);
 
 
-			if (*ptr_EventNumber == 259700){
+			/*if (*ptr_EventNumber == 259700){
 				IVYout << "Event number 259700 has made through MET filter" << endl;  
-			}
+			}*/
 
 
       // Test if the data event is unique (i.e., dorky). Does not do anything in the MC.
@@ -956,9 +956,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       seltracker.accumulate("Pass unique event check", wgt);
 
 
-			if (*ptr_EventNumber == 259700){
+			/*if (*ptr_EventNumber == 259700){
 				IVYout << "Event number 259700 has passed through unique event" << endl;  
-			}
+			}*/
 
 
       // Triggers without HLT object matching
@@ -967,9 +967,9 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
       if (!pass_triggers_dilepton) continue; // Test if any triggers passed at all
       seltracker.accumulate("Pass any trigger", wgt);
 
-			if (*ptr_EventNumber == 259700){
+			/*if (*ptr_EventNumber == 259700){
 				IVYout << "Event number 259700 has passed any trigger" << endl;  
-			}
+			}*/
 
       // Trigger with HLT object matching
       float event_wgt_triggers_dilepton_matched = eventFilter.getTriggerWeight(
