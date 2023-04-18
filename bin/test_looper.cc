@@ -334,7 +334,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 		vector<TString> files = {};
 		files.reserve(n_files);
 		for (int i=1; i<files.capacity()+1; i++){
-			TString file = (input_files=="" ? strinput + "/DY_2l_M_50_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
+			TString file = (input_files=="" ? strinput + "/DoubleEG_2017D_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
 			files.push_back(file);
 		} 
 		vector<TString> cinput = files;

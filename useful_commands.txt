@@ -5,3 +5,5 @@ configureFTAnalysisJobs.py --exe test_looper --nevts 500000 --nthreads=4 --tag 2
 
 watchFTAnalysisJobs.sh test/output/tasks/230209_DY_2l_M_50
 
+nice -n 10 test_looper dataset=/DoubleEG/Run2017D-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD short_name=DoubleEG_2017D period=2017 input_tag=230105 output_tag=data_run1
+
