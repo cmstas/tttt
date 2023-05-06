@@ -108,7 +108,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
   // If we are running on Condor, we will inform the batch job later on that some files would need transfer.
   //TString coutput_main = TString("output/ExampleLooper/") + strdate.data() + "/" + theDataPeriod;
  
-  TString coutput_main = TString("output/") + strdate.data() + "/" + theDataPeriod;
+  TString coutput_main = TString("test/output/") + strdate.data() + "/" + theDataPeriod;
   if (!isCondorRun) coutput_main = ANALYSISPKGPATH  + coutput_main;
 	IVYout << coutput_main << endl;
   HostHelpers::ExpandEnvironmentVariables(coutput_main);
@@ -329,20 +329,20 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 
   for (auto const& dset_proc_pair:dset_proc_pairs){
     TString strinput = SampleHelpers::getInputDirectory() + "/" + strinputdpdir + "/" + dset_proc_pair.second.data();
-    //TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
-  	int n_files = 1; 
+    TString cinput = (input_files=="" ? strinput + "/*.root" : strinput + "/" + input_files.data());
+  	int n_files = 2; 
 		vector<TString> files = {};
 		files.reserve(n_files);
 		for (int i=1; i<files.capacity()+1; i++){
-			TString file = (input_files=="" ? strinput + "/DoubleEG_2017D_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
+			TString file = (input_files=="" ? strinput + "/DoubleEG_2017F_" + to_string(i) + ".root" : strinput + "/" + input_files.data());
 			files.push_back(file);
 		} 
-		vector<TString> cinput = files;
+		//vector<TString> cinput = files;
 		IVYout << "Accessing input files " << cinput << "..." << endl;
     TString const sid = SampleHelpers::getSampleIdentifier(dset_proc_pair.first);
     bool const isData = SampleHelpers::checkSampleIsData(sid);
-    //BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
-    BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
+    BaseTree* tin = new BaseTree(cinput, "Events", "", (isData ? "" : "Counters"));
+    //BaseTree* tin = new BaseTree(cinput,{"Events"}, (isData ? "" : "Counters"));
 		if (!tin->isValid()){
       IVYout << "An error occured while acquiring the input from " << cinput << ". Aborting..." << endl;
       assert(0);
@@ -831,7 +831,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
         bool is_ZClose = std::abs(dilepton->m()-91.2)<15.;
         bool is_DYClose = is_ZClose || is_LowMass;
 				
-				if (*ptr_EventNumber == 259700){
+				/*if (*ptr_EventNumber == 259700){
 					
 					IVYout << "isSS " << isSS << endl;
 					IVYout << "isOS " << isOS << endl;
@@ -841,7 +841,7 @@ int ScanChain(std::string const& strdate, std::string const& dset, std::string c
 					IVYout << "is_ZClose " << is_ZClose << endl;
 					IVYout << "is_DYClose " << is_DYClose << endl;
 					IVYout << "mass " << dilepton->m() << endl;
-				}					
+				}*/					
 
 
 

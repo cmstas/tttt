@@ -7,8 +7,11 @@ void normalize_histogram(TH1F* hist, Double_t norm=1.0) {
 
 void hist_merged(){
 	
-	TFile* file = new TFile("DY_2l_M_50.root","read");
-	TFile* output = new TFile("output_merged.root","recreate");
+	TFile* file = new TFile("/home/users/ymehra/CMSSW_10_6_26/src/tttt/test/output/data_run1_2017D/2017D/DoubleEG_2017D.root","read");
+	TFile* file_sim = new TFile("~/CMSSW_10_6_26/src/tttt/test/output/all_data/2018/all_data/first_run/output_merged.root");
+	TH2F* fR = (TH2F*) file_sim->Get("flip_rate");
+	TFile* output = new TFile("/home/users/ymehra/CMSSW_10_6_26/src/tttt/test/output/data_run1_2017D/2017D/output.root","recreate");
+	
 	TTree* tree = (TTree*)file->Get("SkimTree");
 	
 	// declaring variables in which branch data will be stored
@@ -70,8 +73,8 @@ void hist_merged(){
 	tree->SetBranchAddress("dileptons_gen_trailing_mother",&dileptons_mom_trailing_gen);
 
 	// declaring histograms
-	TH1F* pt_leading_os = new TH1F("pt_leading_os","pt_leading_os",20,0,200);
-	TH1F* eta_leading_os = new TH1F("eta_leading_os","eta_leading_os",20,0,3);
+	TH1F* pt_leading_os = new TH1F("pt_leading_os","pt_leading_os",20,15,300);
+	TH1F* eta_leading_os = new TH1F("eta_leading_os","eta_leading_os",20,0,2.501);
 	TH1F* phi_leading_os = new TH1F("phi_leading_os","phi_leading_os",20,-5,5);
 
 	TH1F* pt_trailing_os = new TH1F("pt_trailing_os","pt_trailing_os",20,0,200);
@@ -110,15 +113,19 @@ void hist_merged(){
 	TH1F* eta_opposite_matched = new TH1F("SS_eta_opposite_matched","SS_eta_opposite_matched",3,0,2.5);
 	TH1F* eta_fake_matched = new TH1F("SS_eta_fake_matched","SS_eta_fake_matched",3,0,2.5);
 
-	Double_t pt_bins[] = {15, 40, 60, 80, 100, 200,1000}; Int_t nbins_pt = sizeof(pt_bins)/sizeof(Double_t) - 1;
-	Double_t eta_bins[] = {0.0, 0.80, 1.479, 2.5}; Int_t nbins_eta = sizeof(eta_bins)/sizeof(Double_t) - 1;
+	Double_t pt_bins[] = {15, 40, 60, 80, 100, 200, 300}; Int_t nbins_pt = sizeof(pt_bins)/sizeof(Double_t) - 1;
+	Double_t eta_bins[] = {0.0, 0.80, 1.479, 2.501}; Int_t nbins_eta = sizeof(eta_bins)/sizeof(Double_t) - 1;
 
-	TH2F* fraction_flips = new TH2F("fraction_flips","fraction_flips",nbins_pt, pt_bins, nbins_eta, eta_bins);
+	TH2F* fraction_flips = new TH2F("flip_rate_1","flip_rate_1",nbins_pt, pt_bins, nbins_eta, eta_bins);
 	TH2F* flip_rate_den = new TH2F("flip_rate_den","flip_rate_den",nbins_pt, pt_bins, nbins_eta, eta_bins);
 	TH2F* os_reco_pt_eta = new TH2F("os_reco", "os_reco", nbins_pt, pt_bins, nbins_eta, eta_bins);
 	TH2F* expected_SS = new TH2F("ss_expected", "ss_expected", nbins_pt, pt_bins, nbins_eta, eta_bins);
 	TH2F* true_SS = new TH2F("ss_true", "ss_true", nbins_pt, pt_bins, nbins_eta, eta_bins);
 	TH2F* difference_SS = new TH2F("difference_SS", "difference", nbins_pt, pt_bins, nbins_eta, eta_bins);
+	TH2F* factor_SS = new TH2F("factor_SS", "factor_SS", nbins_pt, pt_bins, nbins_eta, eta_bins); 
+	TH2F* adjusted_fR = new TH2F("adjused_fR", "adjusted_fR", nbins_pt, pt_bins, nbins_eta, eta_bins);
+	TH2F* new_expected = new TH2F("new_expected","new_expected", nbins_pt, pt_bins, nbins_eta, eta_bins);
+	
 	
 	TH2F* pt_eta_SS_matched = new TH2F("pt_eta_SS_matched","pt_eta_SS_matched",6,15,300,3,0,2.5);
 	TH2F* pt_eta_OS_matched = new TH2F("pt_eta_OS_matched","pt_eta_OS_matched",6,15,300,3,0,2.5);
@@ -161,40 +168,43 @@ void hist_merged(){
 				int part1_id = (*dileptons_pdgId_1)[j], part2_id = (*dileptons_pdgId_2)[j];
 				int match_part1_id = (*dileptons_match_pdgId_1)[j], match_part2_id = (*dileptons_match_pdgId_2)[j];
 			
-				bool gen_SS_event = ((match_part1_id * match_part2_id) > 0);
+				bool gen_SS_event = ((match_part1_id * match_part2_id) == 121);
 				bool correctly_matched_part1 = (part1_id * match_part1_id == 121), correctly_matched_part2 = (part2_id * match_part2_id == 121);
 				bool opposite_matched_part1 = (part1_id * match_part1_id == -121), opposite_matched_part2 = (part2_id * match_part2_id == -121);
-				bool not_matched_1 = (!correctly_matched_part1 && !opposite_matched_part1), not_matched_2 = (!correctly_matched_part2 && !opposite_matched_part2); 
+				bool not_matched_1 = (!correctly_matched_part1 && !opposite_matched_part1), not_matched_2 = (!correctly_matched_part2 && !opposite_matched_part2);
+				bool opposite_event = (opposite_matched_part1 && opposite_matched_part2);
+				
+				bool is_valid = ((!not_matched_1) && (!not_matched_2) && (!gen_SS_event));
+ 
 				float dR_leading = sqrt(pow(((*dileptons_leading_phi)[j] - (*gen_leading_phi)[j]),2)	+ pow(((*dileptons_leading_eta)[j] - (*gen_leading_eta)[j]),2)); 			
 				
 				float dR_trailing = sqrt(pow(((*dileptons_trailing_phi)[j] - (*gen_trailing_phi)[j]),2)	+ pow(((*dileptons_trailing_eta)[j] - (*gen_trailing_eta)[j]),2)); 			
 				int product = part1_id * part2_id;
 
-				if ((opposite_matched_part1 || correctly_matched_part1) && (!gen_SS_event)){
-										
-					flip_rate_den->Fill((*dileptons_leading_pt)[j],abs((*dileptons_leading_eta)[j]));
-
-					if (opposite_matched_part1)
-						fraction_flips->Fill((*dileptons_leading_pt)[j],abs((*dileptons_leading_eta)[j]));
-
-				}
+				double pt_leading = (*dileptons_leading_pt)[j], pt_trailing = (*dileptons_trailing_pt)[j];
 				
-							
-				if ((opposite_matched_part2 || correctly_matched_part2) && (!gen_SS_event)){
-										
-					flip_rate_den->Fill((*dileptons_trailing_pt)[j],abs((*dileptons_trailing_eta)[j]));
+				if (pt_leading > 300) pt_leading = 299.9;
+				if (pt_trailing > 300) pt_trailing = 299.9;
 
-					if (opposite_matched_part2)
-						fraction_flips->Fill((*dileptons_trailing_pt)[j],abs((*dileptons_trailing_eta)[j]));
+				if (is_valid){
+
+					flip_rate_den->Fill(pt_leading, abs((*dileptons_leading_eta)[j]));
+					if (opposite_matched_part1) fraction_flips->Fill(pt_leading ,abs((*dileptons_leading_eta)[j]));
+
+					flip_rate_den->Fill(pt_trailing ,abs((*dileptons_trailing_eta)[j]));
+					 if (opposite_matched_part2) fraction_flips->Fill(pt_trailing ,abs((*dileptons_trailing_eta)[j]));
 
 				}
-
+					
 				if (product < 0){
+
 								
-								if ((!not_matched_1) && (!not_matched_2) && (!gen_SS_event)){
-									os_reco_pt_eta->Fill((*dileptons_leading_pt)[j],abs((*dileptons_leading_eta)[j]));
-									os_reco_pt_eta->Fill((*dileptons_trailing_pt)[j],abs((*dileptons_trailing_eta)[j]));	
+								if (true){
+									os_reco_pt_eta->Fill(pt_leading ,abs((*dileptons_leading_eta)[j]));
+									os_reco_pt_eta->Fill(pt_trailing ,abs((*dileptons_trailing_eta)[j]));	
 								}
+								
+							
 								/*boson_mass_os->Fill((*dileptons_mass)[j]);
 								pt_leading_os->Fill((*dileptons_leading_pt)[j]);	
 								pt_trailing_os->Fill((*dileptons_trailing_pt)[j]);
@@ -202,20 +212,20 @@ void hist_merged(){
 								eta_trailing_os->Fill((*dileptons_trailing_eta)[j]);
 								phi_leading_os->Fill((*dileptons_leading_phi)[j]);
 								phi_trailing_os->Fill((*dileptons_trailing_phi)[j]);
-								total_pt_os->Fill((*dileptons_pt_sum)[j]);*/
+								total_pt_os->Fill((*dileptons_pt_sum)[j]);
 								misidentification_hist_os->Fill((*dileptons_pdgId_1)[j],(*dileptons_match_pdgId_1)[j]);
 								misidentification_hist_os->Fill((*dileptons_pdgId_2)[j],(*dileptons_match_pdgId_2)[j]);
-								//njets_hist_os->Fill((*njets)[j]);
-
+								//njets_hist_os->Fill((*njets)[j]);*/
+																									
 				}
 
 				else {
-							if ((!not_matched_1) && (!not_matched_2) && (!gen_SS_event)){
+							if (true){
 										
-								true_SS->Fill((*dileptons_leading_pt)[j],abs((*dileptons_leading_eta)[j]));
-								true_SS->Fill((*dileptons_trailing_pt)[j],abs((*dileptons_trailing_eta)[j]));	
+								true_SS->Fill(pt_leading ,abs((*dileptons_leading_eta)[j]));
+								true_SS->Fill(pt_trailing ,abs((*dileptons_trailing_eta)[j]));	
 							}
-								if (correctly_matched_part1){
+								/*if (correctly_matched_part1){
 								
 									gen_mom_SS->Fill((*dileptons_mom_leading_gen)[j]);
 
@@ -316,7 +326,7 @@ void hist_merged(){
 				total_pt_ss->Fill((*dileptons_pt_sum)[j]);
 				misidentification_hist_ss->Fill((*dileptons_pdgId_1)[j],(*dileptons_match_pdgId_1)[j]);
 				misidentification_hist_ss->Fill((*dileptons_pdgId_2)[j],(*dileptons_match_pdgId_2)[j]);
-				njets_hist_ss->Fill((*njets)[j]);
+				njets_hist_ss->Fill((*njets)[j]);*/
 				}	
 
 	}			
@@ -477,8 +487,8 @@ void hist_merged(){
 		for (int j=1; j<=os_reco_pt_eta->GetNbinsY(); j++){
 		
 			double current = os_reco_pt_eta->GetBinContent(i, j);
-			double fR = fraction_flips->GetBinContent(i, j);
-			expected_SS->SetBinContent(i, j, current*(fR/(1-fR)));		
+			double number = fR->GetBinContent(i, j);
+			expected_SS->SetBinContent(i, j, current*(number/(1-number)));		
 
 			}
 
@@ -497,10 +507,21 @@ void hist_merged(){
 
 	}
 
-	// end of difference plot	
-		
+	// end of difference plot
+	
+	// new plots
+	
+	TH2F* scaledHist = (TH2F*) true_SS->Clone("clone_true_SS");
+	scaledHist->Scale(0.5);	
+	factor_SS->Divide(scaledHist, expected_SS);
+	adjusted_fR->Multiply(fR,factor_SS);
+	new_expected->Multiply(adjusted_fR, os_reco_pt_eta );				
+	
+	// end of new plots	
 
 	output->Write();
-	file->Close();output->Close();
-	
+
+	output->Close();
+	file_sim->Close();
+	file->Close();
 }

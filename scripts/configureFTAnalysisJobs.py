@@ -250,7 +250,7 @@ def run(args):
          if "output_file" in all_args:
             output_file = all_args["output_file"]
          else:
-            output_file = all_args["short_name"]
+            output_file = all_args["short_name"]			
 
          jobdirapp=""
          if nchunks>0:
@@ -296,7 +296,7 @@ def run(args):
 
 if __name__ == '__main__':
    parser = ArgumentParser()
-
+	 print("hello")
    parser.add_argument("extras", help="csv files with sample specifications (mandatory) and extra arguments to the executable", nargs="+")
    parser.add_argument("--exe", type=str, help="Executable name", required=True)
    parser.add_argument("--tag", type=str, help="Job tag", required=True)
